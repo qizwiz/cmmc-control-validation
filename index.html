@@ -729,48 +729,50 @@ window.CONTROLS["deprovision-cui"] = {
 /* audit-review-cadence.control.js */
 // Control module: audit-review-cadence
 // Honest mapping (grounded 2026-07-05 against NIST SP 800-171 Rev 2 + CMMC L2 assessment guide):
-//   - 3.3.5 (CMMC AU.L2-3.3.5, "Audit Correlation"): "Correlate audit record review, analysis,
-//     and reporting processes for investigation and response to indications of unlawful,
-//     unauthorized, suspicious, or unusual activity." Objectives: [a] processes defined,
-//     [b] defined processes correlated. It does NOT mandate a review frequency.
-//   - 3.3.1 (CMMC AU.L2-3.3.1): "Create and retain system audit logs and records to the extent
-//     needed to enable the monitoring, analysis, investigation, and reporting of unlawful or
-//     unauthorized system activity." Its discussion: logs are "reviewed and analyzed as often
-//     as needed" -- the frequency is ORGANIZATION-DEFINED, not set by NIST.
-//   This check therefore verifies Northwind's OWN SSP-defined 7-day review cadence
-//   (scenario.policy.logReviewCadenceDays), which supports both requirements. The 7-day
-//   window is an SSP parameter, never presented as a NIST mandate.
+//   - 3.3.1 (CMMC AU.L2-3.3.1): create/retain audit logs to enable monitoring, analysis,
+//     investigation. Discussion: logs are "reviewed and analyzed as often as needed" --
+//     frequency is ORGANIZATION-DEFINED, not set by NIST.
+//   - 3.3.5 (CMMC AU.L2-3.3.5, "Audit Correlation"): correlate review/analysis/reporting.
+//   This check verifies Northwind's OWN SSP-defined 7-day review cadence over the whole
+//   monitoring window (scenario.policy.logReviewCadenceDays), which supports both. The 7 is
+//   an SSP parameter, never presented as a NIST mandate.
+//
+// EVENT-HISTORY check (not a single-timestamp recency check): it walks each system's FULL
+// reviewLog across the monitoring window and flags ANY gap between consecutive reviews (and
+// the window-start->first and last->asOf gaps) that exceeds the cadence. This catches a
+// system that lapsed mid-window and then caught up -- which a "last review was recent" scan
+// (and a screenshot audit) shows green and misses.
 // Pure browser JS. No imports, no Node-only APIs. Deterministic.
-// Registers itself on window.CONTROLS.
 
 window.CONTROLS = window.CONTROLS || {};
 window.CONTROLS["audit-review-cadence"] = {
   id: "audit-review-cadence",
   title:
-    "SSP-defined audit log review cadence (supports AU.L2-3.3.1 / 3.3.5; " +
+    "SSP-defined audit log review cadence, over the whole window (supports AU.L2-3.3.1 / 3.3.5; " +
     "frequency organization-defined per SSP, not mandated by NIST)",
   family: "Supports AU.L2-3.3.1 / 3.3.5",
 
   plainEnglish:
-    "Northwind's System Security Plan commits the SOC to reviewing the audit logs of " +
-    "every system that holds CUI at least every 7 days. That cadence is Northwind's own " +
-    "SSP-defined parameter -- NIST 800-171 mandates no specific review frequency. This " +
-    "check verifies Northwind is meeting its own SSP commitment, which supports audit " +
-    "log review under AU.L2-3.3.1 and the correlated review processes of AU.L2-3.3.5.",
+    "Northwind's System Security Plan commits the SOC to reviewing the audit logs of every " +
+    "CUI system at least every 7 days. This check walks the FULL review history across the " +
+    "monitoring window and flags any gap longer than 7 days -- so a system that went dark for " +
+    "weeks and then reviewed yesterday is still caught, even though a 'last review was recent' " +
+    "check would show it green. The 7 days is Northwind's own SSP parameter; NIST mandates no " +
+    "specific frequency.",
 
   propertyText:
-    "FORALL system s in scenario.systems : s.handlesCUI = true  ==>  " +
-    "(asOf - s.lastLogReview) <= scenario.policy.logReviewCadenceDays\n" +
-    "// cadence = 7 days: SSP-defined (Northwind SSP), not a NIST constant",
+    "LET C = policy.logReviewCadenceDays (SSP-defined, not a NIST constant)\n" +
+    "FORALL CUI system s: FORALL consecutive review times t_i < t_{i+1} in\n" +
+    "  [policy.windowStart .. asOf] (bounded by window start and asOf):\n" +
+    "    (t_{i+1} - t_i) <= C   -- no gap in the review history exceeds the cadence",
 
   scenario: {
     org: "Northwind Defense Systems",
     asOf: "2026-07-03T12:00:00",
     policy: {
-      // ORGANIZATION-DEFINED parameter. Source: Northwind SSP (audit & accountability
-      // section). NIST SP 800-171 Rev 2 mandates no review frequency; 3.3.1's discussion
-      // says logs are reviewed "as often as needed".
+      // ORGANIZATION-DEFINED parameters. Source: Northwind SSP (audit & accountability section).
       logReviewCadenceDays: 7,
+      windowStart: "2026-06-19T00:00:00", // the monitoring window this evidence covers
       source: "Northwind SSP (organization-defined parameter, AU policy section)"
     },
     systems: [
@@ -779,32 +781,33 @@ window.CONTROLS["audit-review-cadence"] = {
         name: "CAD Vault (ITAR technical drawings)",
         handlesCUI: true,
         classification: "CUI // ITAR",
-        lastLogReview: "2026-06-14T09:00:00", // 19 days stale -> PLANTED VIOLATION
-        lastReviewedBy: "Dana Ruiz (SOC)"
+        // PLANTED VIOLATION: reviewed on 6/19, then NOTHING until 7/03 -- a 14-day gap.
+        // The last review (7/03) is recent, so a recency check / screenshot shows GREEN;
+        // the gap-over-the-window check catches the lapse a snapshot cannot see.
+        reviewLog: ["2026-06-19T09:00:00", "2026-07-03T09:00:00"]
       },
       {
         id: "cui-fileshare",
         name: "CUI File Share (contract deliverables)",
         handlesCUI: true,
         classification: "CUI // SP-EXPT",
-        lastLogReview: "2026-07-01T08:30:00", // 2 days ago -> legitimately CLEARED
-        lastReviewedBy: "Dana Ruiz (SOC)"
+        // CLEARED: reviewed on cadence the whole window.
+        reviewLog: ["2026-06-19T08:30:00", "2026-06-26T08:30:00", "2026-07-02T08:30:00"]
       },
       {
         id: "contracts-sp",
         name: "Contracts SharePoint (DoD RFPs, CUI)",
         handlesCUI: true,
         classification: "CUI // PROPIN",
-        lastLogReview: "2026-06-27T16:00:00", // ~5.8 days ago -> CLEARED (inside window)
-        lastReviewedBy: "Miguel Ortega (SOC)"
+        // CLEARED: every gap within 7 days.
+        reviewLog: ["2026-06-22T16:00:00", "2026-06-28T16:00:00", "2026-07-03T10:00:00"]
       },
       {
         id: "cafeteria-web",
         name: "Cafeteria Menu Server",
-        handlesCUI: false, // out of scope: stale review here must NOT trigger a finding
+        handlesCUI: false, // out of scope: a lapse here must NOT trigger a finding
         classification: "Public",
-        lastLogReview: "2026-03-02T10:00:00",
-        lastReviewedBy: "Facilities IT"
+        reviewLog: ["2026-03-02T10:00:00"]
       }
     ],
     users: [
@@ -816,14 +819,13 @@ window.CONTROLS["audit-review-cadence"] = {
 
   toggles: [
     {
-      label: "SOC completes the overdue CAD-vault log review today",
+      label: "SOC backfills the missed CAD-vault review that closes the gap",
       apply: function (scn) {
-        // Work on a deep copy so the default scenario is never mutated.
         var fixed = JSON.parse(JSON.stringify(scn));
         for (var i = 0; i < fixed.systems.length; i++) {
           if (fixed.systems[i].id === "cad-vault") {
-            fixed.systems[i].lastLogReview = "2026-07-03T09:15:00";
-            fixed.systems[i].lastReviewedBy = "Dana Ruiz (SOC)";
+            // The mid-window review that should have happened, restoring the cadence.
+            fixed.systems[i].reviewLog = ["2026-06-19T09:00:00", "2026-06-26T09:00:00", "2026-07-03T09:00:00"];
           }
         }
         return fixed;
@@ -831,74 +833,87 @@ window.CONTROLS["audit-review-cadence"] = {
     }
   ],
 
-  // Pure evaluation of propertyText over scn. No hardcoded verdicts.
   check: function (scn) {
     var MS_PER_DAY = 24 * 60 * 60 * 1000;
-    var windowDays =
-      scn.policy && typeof scn.policy.logReviewCadenceDays === "number"
-        ? scn.policy.logReviewCadenceDays
-        : NaN;
-    var cadenceSource =
-      (scn.policy && scn.policy.source) || "SSP-defined parameter";
+    var policy = scn.policy || {};
+    var cadenceDays = typeof policy.logReviewCadenceDays === "number" ? policy.logReviewCadenceDays : NaN;
+    var cadenceSource = policy.source || "SSP-defined parameter";
+    var windowStartMs = Date.parse(policy.windowStart);
+    var asOfMs = Date.parse(scn.asOf);
 
-    // A missing organization-defined parameter must FAIL loudly, never silently pass
-    // (and never silently fall back to an invented constant).
-    if (!isFinite(windowDays)) {
-      return {
-        verdict: "FAIL",
-        findings: [
-          {
-            who: scn.org || "scenario",
-            detail:
-              "scenario.policy.logReviewCadenceDays is missing -- the review cadence is " +
-              "an organization-defined SSP parameter and must be supplied; NIST 800-171 " +
-              "does not define a default.",
-            fields: {
-              "Missing parameter": "scenario.policy.logReviewCadenceDays",
-              "Expected source": "Northwind SSP (organization-defined)"
-            }
-          }
-        ]
-      };
+    // FAIL CLOSED: the cadence and the monitoring window are SSP-defined parameters.
+    if (!isFinite(cadenceDays) || cadenceDays <= 0) {
+      return { verdict: "FAIL", findings: [{
+        who: scn.org || "scenario",
+        detail: "scenario.policy.logReviewCadenceDays is missing -- an organization-defined SSP parameter; NIST defines no default. Fails closed.",
+        fields: { "Missing parameter": "scenario.policy.logReviewCadenceDays", "Expected source": "Northwind SSP" } }] };
+    }
+    if (!isFinite(windowStartMs) || !isFinite(asOfMs)) {
+      return { verdict: "FAIL", findings: [{
+        who: scn.org || "scenario",
+        detail: "scenario.policy.windowStart or scenario.asOf is missing/unparseable -- the monitoring window cannot be bounded, so gaps cannot be evaluated. Fails closed.",
+        fields: { "windowStart": String(policy.windowStart), "asOf": String(scn.asOf) } }] };
     }
 
-    var asOfMs = Date.parse(scn.asOf);
+    var cadenceMs = cadenceDays * MS_PER_DAY;
     var findings = [];
 
     for (var i = 0; i < scn.systems.length; i++) {
       var sys = scn.systems[i];
-      if (!sys.handlesCUI) continue; // property quantifies over CUI systems only
+      if (!sys.handlesCUI) continue; // quantify over CUI systems only
 
-      var reviewMs = Date.parse(sys.lastLogReview);
-      var staleDays = (asOfMs - reviewMs) / MS_PER_DAY;
+      // Sorted review timestamps within [windowStart, asOf]; fail closed on unparseable.
+      var raw = sys.reviewLog || [];
+      var times = [], bad = false;
+      for (var r = 0; r < raw.length; r++) {
+        var t = Date.parse(raw[r]);
+        if (!isFinite(t)) { bad = true; break; }
+        if (t >= windowStartMs && t <= asOfMs) times.push(t);
+      }
+      if (bad) {
+        findings.push({ who: sys.name, detail: "A review timestamp in the log is unparseable -- the review history cannot be verified. Fails closed.",
+          fields: { "System": sys.name, "reviewLog": JSON.stringify(raw) } });
+        continue;
+      }
+      times.sort(function (a, b) { return a - b; });
 
-      if (!(staleDays <= windowDays)) {
+      // Walk boundaries: windowStart -> first, each consecutive pair, last -> asOf.
+      var prev = windowStartMs, worst = -1, worstFrom = null, worstTo = null;
+      var checkGap = function (from, to, label) {
+        var gap = to - from;
+        if (gap > cadenceMs && gap > worst) { worst = gap; worstFrom = label.from; worstTo = label.to; }
+      };
+      var fmt = function (ms) { var d = new Date(ms); var p = function (n) { return (n < 10 ? "0" : "") + n; };
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
+      for (var k = 0; k < times.length; k++) {
+        checkGap(prev, times[k], { from: (k === 0 ? "window start (" + fmt(windowStartMs) + ")" : fmt(prev)), to: fmt(times[k]) });
+        prev = times[k];
+      }
+      checkGap(prev, asOfMs, { from: (times.length ? fmt(prev) : "window start (" + fmt(windowStartMs) + ")"), to: "as-of (" + fmt(asOfMs) + ")" });
+
+      if (worst > cadenceMs) {
+        var gapDays = (worst / MS_PER_DAY).toFixed(1);
+        var lastReviewTxt = times.length ? fmt(times[times.length - 1]) : "(none in window)";
         findings.push({
           who: sys.name,
-          detail:
-            "Audit logs last reviewed " +
-            staleDays.toFixed(1) +
-            " days ago -- exceeds Northwind's SSP-defined " +
-            windowDays +
-            "-day review cadence (an organization-defined SSP parameter; NIST 800-171 " +
-            "mandates no specific frequency).",
+          detail: "Audit-log review lapsed for " + gapDays + " days (" + worstFrom + " -> " + worstTo +
+            "), exceeding Northwind's SSP-defined " + cadenceDays + "-day cadence. Note the last review (" +
+            lastReviewTxt + ") is recent -- a 'last review' check would show this system green.",
           fields: {
             "System": sys.name,
             "Classification": sys.classification,
-            "Last log review": sys.lastLogReview,
-            "Reviewed by": sys.lastReviewedBy,
-            "Days since review": staleDays.toFixed(1),
-            "SSP-defined cadence (days)": String(windowDays),
+            "Longest review gap (days)": gapDays,
+            "Gap": worstFrom + "  ->  " + worstTo,
+            "Reviews in window": String(times.length),
+            "Last review in window": lastReviewTxt,
+            "SSP-defined cadence (days)": String(cadenceDays),
             "Cadence source": cadenceSource
           }
         });
       }
     }
 
-    return {
-      verdict: findings.length === 0 ? "PASS" : "FAIL",
-      findings: findings
-    };
+    return { verdict: findings.length === 0 ? "PASS" : "FAIL", findings: findings };
   }
 };
 

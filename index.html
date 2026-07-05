@@ -1,0 +1,1922 @@
+<title>Elevate your CMMC  -  continuous control validation</title>
+<style>
+  :root{
+    /* Gigit brand kit (from their live Elementor theme) */
+    --sky:#6EC1E4; --sky-deep:#2C86BF; --navy:#000F3F; --ink:#0d1b3e;
+    --slate:#54595F; --gray:#7A7A7A; --faint:#9aa3ad;
+    --green:#3DAE52; --green-tint:#eaf7ee; --green-line:#bfe6c9;
+    --red:#E0454A; --red-tint:#fdecec; --red-line:#f2c2c3;
+    --amber:#B9772A; --amber-tint:#fbf1e1;
+    --ground:#F3F7FB; --card:#ffffff; --line:#e4eaf1; --line2:#d3ddea;
+    --sky-tint:#eaf6fc;
+    --slab:"Roboto Slab", Georgia, "Times New Roman", serif;
+    --sans:"Roboto", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  .wrap{
+    background:
+      radial-gradient(140% 90% at 50% -20%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      var(--ground);
+    color:var(--slate); font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 60px; min-height:100%;
+  }
+  .col{max-width:880px; margin:0 auto;}
+
+  /* brand bar */
+  .brandbar{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:30px;}
+  .wordmark{display:flex; align-items:baseline; gap:2px; font-family:var(--slab); font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em;}
+  .wordmark .dot{color:var(--sky-deep);}
+  .wordmark .sub{font-family:var(--sans); font-weight:600; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); margin-left:8px; align-self:center;}
+  .protochip{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--sky-deep); background:var(--sky-tint); border:1px solid var(--sky); border-radius:20px; padding:5px 11px;}
+
+  .eyebrow{font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--sky-deep);}
+  h1{font-family:var(--slab); font-size:clamp(28px,5vw,44px); line-height:1.08; letter-spacing:-.01em;
+    text-wrap:balance; margin:12px 0 14px; font-weight:700; color:var(--navy);}
+  h1 em{font-style:normal; color:var(--sky-deep);}
+  .dek{color:var(--slate); font-size:clamp(15px,2vw,17px); max-width:64ch;}
+  .dek b{color:var(--navy); font-weight:600;}
+
+  /* control picker, grouped by property class */
+  .picker{margin:32px 0 4px; display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:620px){.picker{grid-template-columns:1fr;}}
+  .pgroup{border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--card);}
+  .pgroup.temporal{border-color:var(--sky); box-shadow:0 0 0 1px var(--sky-tint);}
+  .pglabel{font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); margin-bottom:10px; display:flex; align-items:center; gap:7px;}
+  .pgroup.temporal .pglabel{color:var(--sky-deep);}
+  .pglabel .tag{font-weight:600;}
+  .chips{display:flex; flex-direction:column; gap:7px;}
+  .chip{appearance:none; cursor:pointer; text-align:left; font-family:var(--sans);
+    background:var(--ground); border:1px solid var(--line); border-radius:9px;
+    padding:9px 12px; transition:border-color .15s, background .15s, box-shadow .15s;
+    display:flex; flex-direction:column; gap:2px;}
+  .chip .fam{font-family:var(--mono); font-size:11.5px; color:var(--sky-deep);}
+  .chip .ttl{font-size:13px; color:var(--slate);}
+  .chip:hover{border-color:var(--sky); background:#fff;}
+  .chip:focus-visible{outline:2px solid var(--sky-deep); outline-offset:2px;}
+  .chip.active{background:var(--sky-tint); border-color:var(--sky-deep); box-shadow:0 0 0 1px var(--sky-deep);}
+  .chip.active .ttl{color:var(--navy); font-weight:600;}
+
+  /* context bar */
+  .ctx{display:flex; flex-wrap:wrap; gap:0; margin:24px 0 8px;
+    border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card);}
+  .ctx div{padding:12px 16px; border-right:1px solid var(--line); flex:1 1 150px;}
+  .ctx div:last-child{border-right:none;}
+  .ctx .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint);}
+  .ctx .v{font-size:14px; margin-top:3px; color:var(--navy); font-variant-numeric:tabular-nums;}
+  .ctx .v.fam{font-family:var(--mono); color:var(--sky-deep);}
+  .ctx .v.kind{font-family:var(--mono); font-size:12px;}
+  .ctx .v.kind.temporal{color:var(--sky-deep);} .ctx .v.kind.point{color:var(--gray);}
+
+  /* pipeline */
+  .pipe{position:relative; margin-top:28px; padding-left:34px;}
+  .pipe::before{content:""; position:absolute; left:11px; top:8px; bottom:14px; width:2px;
+    background:linear-gradient(180deg,var(--line2),var(--line2) 82%,transparent);}
+  .stage{position:relative; margin-bottom:20px;}
+  .node{position:absolute; left:-34px; top:0; width:24px; height:24px; border-radius:50%;
+    background:var(--card); border:1.5px solid var(--line2); color:var(--gray);
+    font-family:var(--mono); font-size:12px; display:grid; place-items:center; z-index:2;
+    transition:border-color .2s, color .2s, box-shadow .2s;}
+  .stage.crit .node{border-color:var(--red); color:var(--red); box-shadow:0 0 0 4px var(--red-tint);}
+  .stage.pass .node{border-color:var(--green); color:var(--green); box-shadow:0 0 0 4px var(--green-tint);}
+  .slabel{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin-bottom:8px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
+  .caveat{font-size:12.5px; color:var(--gray); margin-top:9px; padding-left:12px; border-left:2px solid var(--line2);}
+
+  .control-text{font-size:16px; color:var(--ink);}
+  .control-id{font-family:var(--mono); color:var(--sky-deep); font-size:13px;}
+  .cui{color:var(--amber); font-weight:600;}
+  .kindnote{margin-top:10px; font-size:13px; padding:10px 12px; border-radius:8px;}
+  .kindnote.temporal{background:var(--sky-tint); color:#1c5675; border:1px solid var(--sky);}
+  .kindnote.point{background:var(--ground); color:var(--gray); border:1px solid var(--line);}
+  .kindnote b{font-weight:600;}
+
+  pre.prop{margin:0; font-family:var(--mono); font-size:13px; line-height:1.75; color:#123; white-space:pre-wrap; overflow-x:auto;}
+  pre.prop .kw{color:var(--sky-deep); font-weight:600;} pre.prop .op{color:var(--amber);}
+
+  /* remediation switch */
+  .toggle-card{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .switch{position:relative; flex:0 0 auto; width:52px; height:30px;}
+  .switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; z-index:2;}
+  .track{position:absolute; inset:0; border-radius:30px; background:#f2d6d7; border:1px solid var(--red-line); transition:background .2s, border-color .2s;}
+  .knob{position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:var(--red); transition:transform .22s cubic-bezier(.3,.8,.3,1), background .2s;}
+  .switch input:checked ~ .track{background:var(--green-tint); border-color:var(--green-line);}
+  .switch input:checked ~ .track .knob{transform:translateX(22px); background:var(--green);}
+  .switch input:focus-visible ~ .track{outline:2px solid var(--sky-deep); outline-offset:2px;}
+  .toggle-meta{min-width:0; flex:1 1 200px;}
+  .toggle-meta .state{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;}
+  .toggle-meta .state.on{color:var(--green);} .toggle-meta .state.off{color:var(--red);}
+  .toggle-meta .lab{font-size:14px; color:var(--navy); margin-top:3px;}
+  .toggle-hint{font-size:12.5px; color:var(--gray); margin-top:9px; width:100%;}
+
+  .runline{font-family:var(--mono); font-size:13px; color:var(--gray); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+  .runline b{color:var(--navy); font-variant-numeric:tabular-nums;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;}
+
+  /* verdict hero */
+  .verdict{border-radius:14px; padding:20px 22px;}
+  .verdict.fail{border:1px solid var(--red-line); background:var(--red-tint);}
+  .verdict.pass{border:1px solid var(--green-line); background:var(--green-tint);}
+  .verdict-top{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .stamp{font-family:var(--mono); font-weight:700; letter-spacing:.03em; font-size:clamp(28px,6.5vw,46px); line-height:1;}
+  .verdict.fail .stamp{color:var(--red);} .verdict.pass .stamp{color:var(--green);}
+  .stamp small{display:block; font-size:11.5px; letter-spacing:.18em; opacity:.9; font-weight:600; margin-bottom:4px;}
+  .verdict p{margin:12px 0 0; font-size:15px; max-width:60ch; color:var(--ink);}
+
+  .rec{font-family:var(--mono); font-size:13px; border:1px solid var(--line2); border-radius:10px; overflow:hidden; background:var(--card);}
+  .rec .rechead{background:#f6f9fc; padding:9px 14px; color:var(--faint); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; border-bottom:1px solid var(--line);}
+  .rec .row{display:grid; grid-template-columns:210px 1fr; border-bottom:1px solid var(--line);}
+  .rec .row:last-child{border-bottom:none;}
+  .rec .rk{padding:9px 14px; color:var(--gray); border-right:1px solid var(--line);}
+  .rec .rv{padding:9px 14px; color:var(--ink); font-variant-numeric:tabular-nums; word-break:break-word;}
+  .rec .rv.hot{color:var(--red); font-weight:600;}
+  @media(max-width:520px){.rec .row{grid-template-columns:130px 1fr;}}
+  .pass-rec{font-family:var(--mono); font-size:13.5px; color:#1c7a3a; border:1px solid var(--green-line); border-radius:10px; padding:14px 16px; background:var(--green-tint);}
+  .prov{font-size:12px; color:var(--gray); margin-top:9px; font-style:italic;}
+
+  .disc{width:100%; border-collapse:collapse; font-size:13.5px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .disc th{text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:500; padding:9px 14px; border-bottom:1px solid var(--line2); background:#f6f9fc;}
+  .disc td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .disc tr:last-child td{border-bottom:none;}
+  .disc .name{color:var(--navy);}
+  .disc .sub{color:var(--faint); font-size:12px;}
+  .disc .rz{color:var(--red); font-size:12px; margin-top:4px;}
+  .pill{font-family:var(--mono); font-size:11px; letter-spacing:.05em; padding:3px 9px; border-radius:20px; white-space:nowrap;}
+  .pill.pass{color:var(--green); background:var(--green-tint); border:1px solid var(--green-line);}
+  .pill.fail{color:var(--red); background:var(--red-tint); border:1px solid var(--red-line);}
+
+  .why{margin-top:36px; display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:600px){.why{grid-template-columns:1fr;}}
+  .why .c{border:1px solid var(--line); border-radius:12px; padding:18px; background:var(--card);}
+  .why h3{margin:0 0 8px; font-size:13px; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--gray); font-weight:500;}
+  .why .new{border-color:var(--sky);} .why .new h3{color:var(--sky-deep);}
+  .why p{margin:0; font-size:14.5px; color:var(--slate);} .why .old p{color:var(--faint);}
+
+  .swap{margin-top:22px; font-size:14px; color:var(--slate); border-left:3px solid var(--sky); padding:4px 0 4px 16px; background:linear-gradient(90deg,var(--sky-tint),transparent);}
+  .swap b{color:var(--navy);}
+
+  footer{margin-top:36px; padding-top:18px; border-top:1px solid var(--line); font-size:12px; color:var(--faint); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  footer .mark{font-family:var(--mono); letter-spacing:.04em; color:var(--gray);}
+
+  .live{animation:flash .5s ease;}
+  @keyframes flash{0%{opacity:.4; transform:translateY(4px);} 100%{opacity:1; transform:none;}}
+  @media(prefers-reduced-motion:reduce){.live{animation:none;} .knob{transition:none;}}
+</style>
+
+<div class="wrap">
+  <div class="col">
+
+    <div class="brandbar">
+      <div class="wordmark">gigit<span class="dot">.</span><span class="sub">security</span></div>
+      <div class="protochip">Prototype &middot; not an official assessment</div>
+    </div>
+
+    <div class="eyebrow">Elevate your CMMC</div>
+    <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
+    <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; and the ones that matter most aren&rsquo;t configuration snapshots, they&rsquo;re the properties that must hold <b>continuously, across every event, over the whole monitoring window.</b> That&rsquo;s the part a checklist can&rsquo;t reach. Pick a control and see it evaluated, with the exact record behind every verdict.</p>
+
+    <div class="picker" id="picker"></div>
+
+    <div class="ctx">
+      <div><div class="k">Organization</div><div class="v">Northwind Defense Systems</div></div>
+      <div><div class="k">Control</div><div class="v fam" id="ctx-fam">&mdash;</div></div>
+      <div><div class="k">Property class</div><div class="v kind" id="ctx-kind">&mdash;</div></div>
+      <div><div class="k">Subjects checked</div><div class="v" id="ctx-count">&mdash;</div></div>
+    </div>
+
+    <div class="pipe">
+      <div class="stage">
+        <div class="node">1</div>
+        <div class="slabel">The control, in plain English</div>
+        <div class="card">
+          <div class="control-text" id="s-plain"></div>
+          <div class="kindnote" id="s-kindnote"></div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="node">2</div>
+        <div class="slabel">The property the machine checks &mdash; validated, not free-authored</div>
+        <div class="card">
+          <pre class="prop" id="s-prop"></pre>
+          <div class="caveat">Thresholds shown (24h, 7 days, 15 min&hellip;) are <b>your SSP-defined parameters</b> &mdash; the checker validates the parameter you set, not a number it invented.</div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="node">3</div>
+        <div class="slabel">Remediation &mdash; you drive this</div>
+        <div class="card toggle-card">
+          <label class="switch">
+            <input type="checkbox" id="fix-toggle" aria-label="Apply remediation">
+            <span class="track"><span class="knob"></span></span>
+          </label>
+          <div class="toggle-meta">
+            <div class="state off" id="fix-state">Violation present</div>
+            <div class="lab" id="fix-label"></div>
+          </div>
+          <div class="toggle-hint">Flip the switch to remediate the environment. The checker re-runs and the verdict below re-derives from the changed evidence &mdash; nothing here is pre-recorded.</div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="node">4</div>
+        <div class="slabel">The check, against the actual evidence</div>
+        <div class="card"><div class="runline" id="s-run"></div></div>
+      </div>
+
+      <div class="stage" id="stage-verdict">
+        <div class="node" id="v-node">&times;</div>
+        <div class="slabel">Verdict</div>
+        <div id="s-verdict"></div>
+      </div>
+
+      <div class="stage" id="stage-evidence">
+        <div class="node" id="e-node">!</div>
+        <div class="slabel" id="e-label">The proof &mdash; the exact violating record</div>
+        <div id="s-evidence"></div>
+        <div class="prov">Evaluated against the evidence provided. A PASS means <b>no violating record in these records</b> &mdash; not coverage beyond them; every verdict carries its source and record count.</div>
+      </div>
+    </div>
+
+    <div class="slabel" style="margin-top:30px;">Every subject evaluated &mdash; precise, not blunt</div>
+    <table class="disc">
+      <thead><tr><th>Subject</th><th style="text-align:right">Result</th></tr></thead>
+      <tbody id="s-roster"></tbody>
+    </table>
+    <p class="dek" style="margin-top:12px; font-size:14px;" id="s-rosternote"></p>
+
+    <div class="why">
+      <div class="c old">
+        <h3>A checklist / screenshot audit</h3>
+        <p>Captures one moment in time and marks a box green. Between assessments, drift is invisible &mdash; and a point-in-time snapshot can&rsquo;t tell you whether the control held every day in between.</p>
+      </div>
+      <div class="c new">
+        <h3>This</h3>
+        <p>A formal property, checked by a verifier that returns the exact violating record as its evidence &mdash; and for time-based controls, evaluated as a property over the <b>whole window</b>, not a single snapshot. Built to run continuously.</p>
+      </div>
+    </div>
+
+    <div class="swap">
+      <b>Continuous is the hard part &mdash; and where this earns its keep.</b> Point-in-time config checks are table stakes; every tool has them. The controls that must hold <b>over time</b> &mdash; deprovisioning SLAs, review cadences, and the temporal assurance a cATO / continuous-monitoring program demands &mdash; are the ones that need real property verification. Same engine, any control, any framework you write.
+    </div>
+
+    <footer>
+      <span class="mark">Machine-checked control validation &middot; continuous by design</span>
+      <span>Illustrative environment (&ldquo;Northwind Defense&rdquo;) &middot; synthetic evidence &middot; every verdict computed live in your browser &middot; prototype prepared for Gigit Security</span>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+/* control modules (each self-validated in Node: default FAILs, remediation clears) */
+</script>
+<script>
+/* deprovision-cui.control.js */
+// Control module: deprovision-cui (PS.L2-3.9.2 - Personnel Actions)
+// Pure browser JS - no imports, no Node APIs. Deterministic.
+//
+// GROUNDING (fetched 2026-07-05, NIST SP 800-171 Rev 2 / CMMC Level 2):
+//   Requirement 3.9.2: "Ensure that organizational systems containing CUI are
+//   protected during and after personnel actions such as terminations and
+//   transfers."
+//   CMMC/800-171A assessment objective 3.9.2[b]: "system access and credentials
+//   are terminated consistent with personnel actions such as termination or
+//   transfer."
+//   This checker encodes objective [b] for BOTH personnel actions:
+//     - TERMINATION: every CUI access grant must be revoked within the window.
+//     - TRANSFER:    prior-role CUI access no longer needed (flagged
+//                    revokeOnTransfer) must be revoked within the window; access
+//                    still authorized in the new role is left alone.
+//   (Previously mislabeled AC.L2-3.1.1, and previously covered terminations only.)
+//   Honest scope: objective [b] "credentials" conjunct (badges/tokens) and
+//   objective [a] (documented process) are org-evidence, out of this data model.
+//
+// NOTE ON THE TIME WINDOW: NIST mandates NO specific deprovisioning deadline.
+// The 24-hour window checked here is an ORGANIZATION-DEFINED parameter from the
+// (fictional) Northwind SSP - the org-defined time period of NIST SP 800-53
+// PS-4 (Personnel Termination). It lives in scenario.policy.deprovisionWindowHours
+// and every finding cites it as the "Northwind SSP-defined deprovisioning period
+// (PS-4)", never as a NIST-mandated number.
+//
+// FAIL-CLOSED DATA-QUALITY RULES (no silent skips):
+//   - scenario.policy.deprovisionWindowHours missing/invalid              => FAIL
+//   - user with an unrecognized employment status                        => FAIL
+//   - user with a personnel action but action date unset/unparseable     => FAIL
+//   - any access grant whose systemId is not in the inventory            => FAIL
+//   - scenario.asOf unparseable, or revokedAt set but unparseable        => FAIL
+
+window.CONTROLS = window.CONTROLS || {};
+window.CONTROLS["deprovision-cui"] = {
+  id: "deprovision-cui",
+  title: "Departed and transferred users lose stale CUI access within the SSP-defined window",
+  family: "PS.L2-3.9.2",
+  plainEnglish:
+    "When someone leaves the company OR moves to a new role, the CUI access they no " +
+    "longer need must be shut off. NIST 800-171 (3.9.2) requires access be terminated " +
+    "consistent with the personnel action - termination or transfer - but mandates no " +
+    "deadline; the 24-hour window checked here is Northwind's own SSP-defined " +
+    "deprovisioning period (PS-4).",
+  propertyText:
+    "LET W = policy.deprovisionWindowHours (SSP-defined, PS-4 - not a NIST value)\n" +
+    "FORALL user u, FORALL access grant g of u:\n" +
+    "  system(g).cui AND inScopeForAction(u, g) IMPLIES\n" +
+    "    (g.revokedAt != null AND g.revokedAt <= actionAt(u) + W)\n" +
+    "    OR (g.revokedAt = null AND asOf <= actionAt(u) + W)\n" +
+    "where inScopeForAction = (u.status='terminated')  -- all CUI access\n" +
+    "                      OR (u.status='transferred' AND g.revokeOnTransfer)  -- prior-role access\n" +
+    "DATA QUALITY (fail closed): u.status in {active,terminated,transferred} ; a user with an " +
+    "action has a valid action timestamp ; every grant's system resolves ; revokedAt null or parses ; " +
+    "W present ; asOf parses",
+
+  scenario: {
+    org: "Northwind Defense Systems",
+    asOf: "2026-07-03T12:00:00",
+    policy: {
+      // ORGANIZATION-DEFINED parameter, NOT a NIST requirement. Northwind's SSP
+      // commits to revoking access within 24 hours of a personnel action (the
+      // org-defined time period of NIST SP 800-53 PS-4).
+      deprovisionWindowHours: 24,
+      source: "Northwind SSP-defined deprovisioning period (PS-4)"
+    },
+    systems: [
+      { id: "cad-vault",      name: "ITAR CAD Vault (missile fin geometry)",       cui: true },
+      { id: "cui-fileshare",  name: "CUI Program Fileshare (contract deliverables)", cui: true },
+      { id: "cafeteria-wiki", name: "Cafeteria Menu Wiki",                          cui: false }
+    ],
+    users: [
+      {
+        id: "u-bob",
+        name: "Bob Kessler",
+        role: "Senior Propulsion Engineer",
+        status: "terminated",
+        terminatedAt: "2026-06-10T17:00:00",
+        access: [
+          // PLANTED VIOLATION (termination): terminated 2026-06-10, still active on a
+          // CUI CAD vault with admin rights three-plus weeks later.
+          { systemId: "cad-vault", level: "admin", grantedAt: "2023-02-01T09:00:00", revokedAt: null },
+          // Non-CUI access left active - NOT a violation (checker is scoped to CUI systems).
+          { systemId: "cafeteria-wiki", level: "editor", grantedAt: "2023-02-01T09:00:00", revokedAt: null }
+        ]
+      },
+      {
+        id: "u-frank",
+        name: "Frank Osei",
+        role: "moved: Propulsion Eng. -> Facilities Coordinator",
+        status: "transferred",
+        transferredAt: "2026-06-05T17:00:00",
+        access: [
+          // PLANTED VIOLATION (transfer): prior-role CUI access that his new,
+          // non-CUI role does not need was never revoked - active 28 days later.
+          { systemId: "cad-vault", level: "admin", grantedAt: "2022-04-01T09:00:00", revokedAt: null, revokeOnTransfer: true }
+        ]
+      },
+      {
+        id: "u-nina",
+        name: "Nina Alvarez",
+        role: "moved: Contracts Analyst -> Senior Contracts Analyst",
+        status: "transferred",
+        transferredAt: "2026-06-20T16:00:00",
+        access: [
+          // CLEARED: still authorized in the new role (not flagged for removal) - a transfer
+          // does NOT mean revoke everything, only what the new role no longer needs.
+          { systemId: "cui-fileshare", level: "read", grantedAt: "2024-01-10T09:00:00", revokedAt: null },
+          // CLEARED: prior-role access flagged for removal and revoked ~3h after transfer.
+          { systemId: "cad-vault", level: "read", grantedAt: "2024-01-10T09:00:00", revokedAt: "2026-06-20T19:00:00", revokeOnTransfer: true }
+        ]
+      },
+      {
+        id: "u-dana",
+        name: "Dana Ruiz",
+        role: "Contracts Analyst",
+        status: "terminated",
+        terminatedAt: "2026-05-01T16:00:00",
+        access: [
+          // CLEARED: revoked ~2 hours after termination, well inside the SSP window.
+          { systemId: "cui-fileshare", level: "read", grantedAt: "2024-03-15T09:00:00", revokedAt: "2026-05-01T18:05:00" }
+        ]
+      },
+      {
+        id: "u-priya",
+        name: "Priya Shah",
+        role: "Manufacturing Lead",
+        status: "active",
+        terminatedAt: null,
+        access: [
+          // Active employee with CUI access - fine.
+          { systemId: "cad-vault", level: "write", grantedAt: "2022-08-20T09:00:00", revokedAt: null },
+          { systemId: "cui-fileshare", level: "read", grantedAt: "2022-08-20T09:00:00", revokedAt: null }
+        ]
+      },
+      {
+        id: "u-miguel",
+        name: "Miguel Torres",
+        role: "Summer Intern (badge-only)",
+        status: "terminated",
+        terminatedAt: "2026-06-28T17:00:00",
+        access: [
+          // CLEARED: only ever had non-CUI access, so nothing to deprovision.
+          { systemId: "cafeteria-wiki", level: "viewer", grantedAt: "2026-06-01T09:00:00", revokedAt: null }
+        ]
+      }
+    ]
+  },
+
+  toggles: [
+    {
+      label: "Run the deprovisioning process: revoke departed and transferred users' stale CUI access within the SSP window (24h)",
+      apply: function (scn) {
+        // Work on a deep copy so the original scenario object is never mutated.
+        var fixed = JSON.parse(JSON.stringify(scn));
+        var revoke = { "u-bob": "2026-06-10T21:00:00", "u-frank": "2026-06-05T20:30:00" };
+        for (var i = 0; i < fixed.users.length; i++) {
+          var u = fixed.users[i];
+          var when = revoke[u.id];
+          if (!when) continue;
+          for (var j = 0; j < u.access.length; j++) {
+            if (u.access[j].systemId === "cad-vault" && u.access[j].revokedAt === null) {
+              u.access[j].revokedAt = when; // offboarding / role-change script ran same evening
+            }
+          }
+        }
+        return fixed;
+      }
+    }
+  ],
+
+  check: function (scn) {
+    var findings = [];
+    var policy = scn.policy || {};
+    var windowHours = policy.deprovisionWindowHours;
+    var windowSource = policy.source || "SSP-defined deprovisioning period (PS-4)";
+
+    // FAIL CLOSED: the deprovisioning window is an SSP-defined parameter. If the
+    // scenario does not carry it, the property cannot be evaluated - fail closed.
+    if (typeof windowHours !== "number" || !isFinite(windowHours) || windowHours <= 0) {
+      return {
+        verdict: "FAIL",
+        findings: [{
+          who: "Scenario policy block",
+          detail:
+            "DATA QUALITY: scenario.policy.deprovisionWindowHours is missing or invalid. " +
+            "The deprovisioning window is an SSP-defined parameter (PS-4), not a NIST value; " +
+            "without it the property cannot be evaluated, so the control fails closed.",
+          fields: {
+            "Expected parameter": "scenario.policy.deprovisionWindowHours (hours, > 0)",
+            "Found": String(windowHours),
+            "Why it matters":
+              "NIST 800-171 3.9.2 mandates no deadline; the deadline comes from the " +
+              "organization's SSP. No SSP parameter, no verdict."
+          }
+        }]
+      };
+    }
+
+    var GRACE_MS = windowHours * 60 * 60 * 1000;
+    var asOfMs = Date.parse(scn.asOf);
+
+    // FAIL CLOSED: without a parseable as-of instant, "still active past the
+    // deadline" cannot be evaluated - fail closed.
+    if (!isFinite(asOfMs)) {
+      return {
+        verdict: "FAIL",
+        findings: [{
+          who: "Scenario data",
+          detail:
+            "DATA QUALITY: scenario.asOf is missing or unparseable, so grants that are " +
+            "still active cannot be tested against the deprovisioning deadline. Fails closed.",
+          fields: {
+            "Expected": "scenario.asOf as a parseable timestamp",
+            "Found": String(scn.asOf),
+            "Deprovision window": windowHours + "h - " + windowSource + " (not a NIST-mandated value)"
+          }
+        }]
+      };
+    }
+    var fmtLocal = function (ms) {
+      var d = new Date(ms);
+      var p = function (n) { return (n < 10 ? "0" : "") + n; };
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+        "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+    };
+    var systemsById = {};
+    for (var s = 0; s < scn.systems.length; s++) {
+      systemsById[scn.systems[s].id] = scn.systems[s];
+    }
+
+    var KNOWN_STATUS = { active: 1, terminated: 1, transferred: 1 };
+
+    for (var i = 0; i < scn.users.length; i++) {
+      var u = scn.users[i];
+      var status = (typeof u.status === "string") ? u.status.trim().toLowerCase() : "";
+
+      // FAIL CLOSED: an unrecognized employment status can't be classified, so
+      // deprovisioning obligations can't be determined. Never a silent PASS.
+      if (!KNOWN_STATUS[status]) {
+        findings.push({
+          who: u.name + " (" + u.role + ")",
+          detail:
+            "DATA QUALITY: unrecognized employment status \"" + String(u.status) + "\". " +
+            "Status must be one of active / terminated / transferred; an unknown value " +
+            "makes deprovisioning obligations unverifiable, so the control fails closed.",
+          fields: {
+            "User": u.name,
+            "Status (as found)": String(u.status),
+            "Allowed": "active | terminated | transferred",
+            "Access grants on file": String((u.access || []).length)
+          }
+        });
+        continue;
+      }
+
+      var isTerminated = (status === "terminated");
+      var isTransferred = (status === "transferred");
+      if (!isTerminated && !isTransferred) continue; // active - nothing to deprovision
+
+      var actionKind = isTerminated ? "termination" : "transfer";
+      var actionField = isTerminated ? "terminatedAt" : "transferredAt";
+      var actionRaw = isTerminated ? u.terminatedAt : u.transferredAt;
+      var actionPresent = !(actionRaw === null || actionRaw === undefined || actionRaw === "");
+      var actionMs = actionPresent ? Date.parse(actionRaw) : NaN;
+      var hasActionDate = actionPresent && isFinite(actionMs);
+
+      // FAIL CLOSED: a personnel action with no usable date can't be checked
+      // against the deadline - data-quality FAIL, not a silent skip.
+      if (!hasActionDate) {
+        findings.push({
+          who: u.name + " (" + u.role + ")",
+          detail:
+            "DATA QUALITY: user is marked " + actionKind + " but " + actionField + " is " +
+            (actionPresent ? "unparseable" : "not set") + ", so the " + windowSource +
+            " cannot be applied. Deprovisioning is unverifiable - fails closed.",
+          fields: {
+            "User": u.name,
+            "Status": u.status,
+            "Personnel action": actionKind,
+            [actionField]: actionPresent ? "UNPARSEABLE: " + String(actionRaw) : "NOT SET",
+            "Access grants on file": String((u.access || []).length),
+            "Deprovision window": windowHours + "h - " + windowSource + " (not a NIST-mandated value)",
+            "As of": scn.asOf
+          }
+        });
+        continue;
+      }
+
+      var deadlineMs = actionMs + GRACE_MS;
+
+      for (var j = 0; j < u.access.length; j++) {
+        var g = u.access[j];
+        var sys = systemsById[g.systemId];
+
+        // FAIL CLOSED: a grant pointing at an unknown system can't be classified.
+        if (!sys) {
+          findings.push({
+            who: u.name + " (" + u.role + ")",
+            detail:
+              "DATA QUALITY: access grant references unknown system id \"" + g.systemId + "\" - " +
+              "its CUI status cannot be determined, so this grant is unverifiable. Fails closed.",
+            fields: {
+              "User": u.name,
+              "Status": u.status,
+              "System id (unresolved)": String(g.systemId),
+              "System holds CUI": "UNKNOWN - system not in inventory",
+              "Access level": g.level,
+              "Revoked at": g.revokedAt == null ? "NEVER (still active)" : g.revokedAt,
+              "Deprovision window": windowHours + "h - " + windowSource + " (not a NIST-mandated value)",
+              "As of": scn.asOf
+            }
+          });
+          continue;
+        }
+        if (!sys.cui) continue; // property only quantifies over CUI-holding systems
+
+        // SCOPE per personnel action (PS.L2-3.9.2[b]):
+        //  - termination: ALL CUI access must be revoked.
+        //  - transfer: only prior-role access no longer needed (revokeOnTransfer)
+        //    must be revoked; access still authorized in the new role is fine.
+        if (isTransferred && g.revokeOnTransfer !== true) continue;
+
+        var violated = false;
+        var detail = "";
+        if (g.revokedAt === null || g.revokedAt === undefined) {
+          if (asOfMs > deadlineMs) {
+            violated = true;
+            var daysOver = Math.floor((asOfMs - deadlineMs) / (24 * 60 * 60 * 1000));
+            detail =
+              "Access still ACTIVE " + daysOver + " day(s) past the deprovisioning deadline on " +
+              "CUI system \"" + sys.name + "\" after " + actionKind + ". Deadline = " + actionField +
+              " + " + windowHours + "h, per the " + windowSource + " (not a NIST-mandated value).";
+          }
+        } else {
+          var revMs = Date.parse(g.revokedAt);
+          if (!isFinite(revMs)) {
+            violated = true;
+            detail =
+              "DATA QUALITY: revokedAt (\"" + g.revokedAt + "\") is unparseable, so revocation " +
+              "timing on CUI system \"" + sys.name + "\" cannot be verified against the " +
+              windowSource + ". Fails closed.";
+          } else if (revMs > deadlineMs) {
+            violated = true;
+            detail =
+              "Access was revoked, but LATE: revocation happened after the " + windowHours + "h deadline " +
+              "set by the " + windowSource + " on CUI system \"" + sys.name + "\" after " + actionKind + ".";
+          }
+        }
+
+        if (violated) {
+          findings.push({
+            who: u.name + " (" + u.role + ")",
+            detail: detail,
+            fields: {
+              "User": u.name,
+              "Status": u.status,
+              "Personnel action": actionKind,
+              "Action date": actionRaw,
+              "System": sys.name,
+              "System holds CUI": "yes",
+              "Access level": g.level,
+              "Prior-role (revoke on transfer)": (g.revokeOnTransfer === true ? "yes" : (isTransferred ? "no" : "n/a")),
+              "Revoked at": g.revokedAt == null ? "NEVER (still active)" : g.revokedAt,
+              "Deprovision window": windowHours + "h - " + windowSource + " (not a NIST-mandated value)",
+              "Deadline (action + window)": fmtLocal(deadlineMs),
+              "As of": scn.asOf
+            }
+          });
+        }
+      }
+    }
+
+    return { verdict: findings.length === 0 ? "PASS" : "FAIL", findings: findings };
+  }
+};
+
+</script>
+<script>
+/* audit-review-cadence.control.js */
+// Control module: audit-review-cadence
+// Honest mapping (grounded 2026-07-05 against NIST SP 800-171 Rev 2 + CMMC L2 assessment guide):
+//   - 3.3.5 (CMMC AU.L2-3.3.5, "Audit Correlation"): "Correlate audit record review, analysis,
+//     and reporting processes for investigation and response to indications of unlawful,
+//     unauthorized, suspicious, or unusual activity." Objectives: [a] processes defined,
+//     [b] defined processes correlated. It does NOT mandate a review frequency.
+//   - 3.3.1 (CMMC AU.L2-3.3.1): "Create and retain system audit logs and records to the extent
+//     needed to enable the monitoring, analysis, investigation, and reporting of unlawful or
+//     unauthorized system activity." Its discussion: logs are "reviewed and analyzed as often
+//     as needed" -- the frequency is ORGANIZATION-DEFINED, not set by NIST.
+//   This check therefore verifies Northwind's OWN SSP-defined 7-day review cadence
+//   (scenario.policy.logReviewCadenceDays), which supports both requirements. The 7-day
+//   window is an SSP parameter, never presented as a NIST mandate.
+// Pure browser JS. No imports, no Node-only APIs. Deterministic.
+// Registers itself on window.CONTROLS.
+
+window.CONTROLS = window.CONTROLS || {};
+window.CONTROLS["audit-review-cadence"] = {
+  id: "audit-review-cadence",
+  title:
+    "SSP-defined audit log review cadence (supports AU.L2-3.3.1 / 3.3.5; " +
+    "frequency organization-defined per SSP, not mandated by NIST)",
+  family: "Supports AU.L2-3.3.1 / 3.3.5",
+
+  plainEnglish:
+    "Northwind's System Security Plan commits the SOC to reviewing the audit logs of " +
+    "every system that holds CUI at least every 7 days. That cadence is Northwind's own " +
+    "SSP-defined parameter -- NIST 800-171 mandates no specific review frequency. This " +
+    "check verifies Northwind is meeting its own SSP commitment, which supports audit " +
+    "log review under AU.L2-3.3.1 and the correlated review processes of AU.L2-3.3.5.",
+
+  propertyText:
+    "FORALL system s in scenario.systems : s.handlesCUI = true  ==>  " +
+    "(asOf - s.lastLogReview) <= scenario.policy.logReviewCadenceDays\n" +
+    "// cadence = 7 days: SSP-defined (Northwind SSP), not a NIST constant",
+
+  scenario: {
+    org: "Northwind Defense Systems",
+    asOf: "2026-07-03T12:00:00",
+    policy: {
+      // ORGANIZATION-DEFINED parameter. Source: Northwind SSP (audit & accountability
+      // section). NIST SP 800-171 Rev 2 mandates no review frequency; 3.3.1's discussion
+      // says logs are reviewed "as often as needed".
+      logReviewCadenceDays: 7,
+      source: "Northwind SSP (organization-defined parameter, AU policy section)"
+    },
+    systems: [
+      {
+        id: "cad-vault",
+        name: "CAD Vault (ITAR technical drawings)",
+        handlesCUI: true,
+        classification: "CUI // ITAR",
+        lastLogReview: "2026-06-14T09:00:00", // 19 days stale -> PLANTED VIOLATION
+        lastReviewedBy: "Dana Ruiz (SOC)"
+      },
+      {
+        id: "cui-fileshare",
+        name: "CUI File Share (contract deliverables)",
+        handlesCUI: true,
+        classification: "CUI // SP-EXPT",
+        lastLogReview: "2026-07-01T08:30:00", // 2 days ago -> legitimately CLEARED
+        lastReviewedBy: "Dana Ruiz (SOC)"
+      },
+      {
+        id: "contracts-sp",
+        name: "Contracts SharePoint (DoD RFPs, CUI)",
+        handlesCUI: true,
+        classification: "CUI // PROPIN",
+        lastLogReview: "2026-06-27T16:00:00", // ~5.8 days ago -> CLEARED (inside window)
+        lastReviewedBy: "Miguel Ortega (SOC)"
+      },
+      {
+        id: "cafeteria-web",
+        name: "Cafeteria Menu Server",
+        handlesCUI: false, // out of scope: stale review here must NOT trigger a finding
+        classification: "Public",
+        lastLogReview: "2026-03-02T10:00:00",
+        lastReviewedBy: "Facilities IT"
+      }
+    ],
+    users: [
+      { name: "Dana Ruiz", role: "SOC Analyst", clearance: "Secret" },
+      { name: "Miguel Ortega", role: "SOC Analyst", clearance: "Secret" },
+      { name: "Priya Shah", role: "ISSM", clearance: "Top Secret" }
+    ]
+  },
+
+  toggles: [
+    {
+      label: "SOC completes the overdue CAD-vault log review today",
+      apply: function (scn) {
+        // Work on a deep copy so the default scenario is never mutated.
+        var fixed = JSON.parse(JSON.stringify(scn));
+        for (var i = 0; i < fixed.systems.length; i++) {
+          if (fixed.systems[i].id === "cad-vault") {
+            fixed.systems[i].lastLogReview = "2026-07-03T09:15:00";
+            fixed.systems[i].lastReviewedBy = "Dana Ruiz (SOC)";
+          }
+        }
+        return fixed;
+      }
+    }
+  ],
+
+  // Pure evaluation of propertyText over scn. No hardcoded verdicts.
+  check: function (scn) {
+    var MS_PER_DAY = 24 * 60 * 60 * 1000;
+    var windowDays =
+      scn.policy && typeof scn.policy.logReviewCadenceDays === "number"
+        ? scn.policy.logReviewCadenceDays
+        : NaN;
+    var cadenceSource =
+      (scn.policy && scn.policy.source) || "SSP-defined parameter";
+
+    // A missing organization-defined parameter must FAIL loudly, never silently pass
+    // (and never silently fall back to an invented constant).
+    if (!isFinite(windowDays)) {
+      return {
+        verdict: "FAIL",
+        findings: [
+          {
+            who: scn.org || "scenario",
+            detail:
+              "scenario.policy.logReviewCadenceDays is missing -- the review cadence is " +
+              "an organization-defined SSP parameter and must be supplied; NIST 800-171 " +
+              "does not define a default.",
+            fields: {
+              "Missing parameter": "scenario.policy.logReviewCadenceDays",
+              "Expected source": "Northwind SSP (organization-defined)"
+            }
+          }
+        ]
+      };
+    }
+
+    var asOfMs = Date.parse(scn.asOf);
+    var findings = [];
+
+    for (var i = 0; i < scn.systems.length; i++) {
+      var sys = scn.systems[i];
+      if (!sys.handlesCUI) continue; // property quantifies over CUI systems only
+
+      var reviewMs = Date.parse(sys.lastLogReview);
+      var staleDays = (asOfMs - reviewMs) / MS_PER_DAY;
+
+      if (!(staleDays <= windowDays)) {
+        findings.push({
+          who: sys.name,
+          detail:
+            "Audit logs last reviewed " +
+            staleDays.toFixed(1) +
+            " days ago -- exceeds Northwind's SSP-defined " +
+            windowDays +
+            "-day review cadence (an organization-defined SSP parameter; NIST 800-171 " +
+            "mandates no specific frequency).",
+          fields: {
+            "System": sys.name,
+            "Classification": sys.classification,
+            "Last log review": sys.lastLogReview,
+            "Reviewed by": sys.lastReviewedBy,
+            "Days since review": staleDays.toFixed(1),
+            "SSP-defined cadence (days)": String(windowDays),
+            "Cadence source": cadenceSource
+          }
+        });
+      }
+    }
+
+    return {
+      verdict: findings.length === 0 ? "PASS" : "FAIL",
+      findings: findings
+    };
+  }
+};
+
+</script>
+<script>
+/* least-privilege-admin.control.js */
+/* ==========================================================================
+ * Control module: least-privilege-admin (AC.L2-3.1.5)
+ * Pure browser JS. No imports, no Node-only APIs. Deterministic.
+ *
+ * GROUNDING (NIST SP 800-171 Rev 2, requirement 3.1.5 -- verbatim):
+ *   "Employ the principle of least privilege, including for specific
+ *    security functions and privileged accounts."
+ * 800-171A / CMMC L2 assessment objectives for AC.L2-3.1.5:
+ *   3.1.5[a] privileged accounts are identified;
+ *   3.1.5[b] access to privileged accounts is authorized in accordance
+ *            with the principle of least privilege;
+ *   3.1.5[c] security functions are identified;
+ *   3.1.5[d] access to security functions is authorized in accordance
+ *            with the principle of least privilege.
+ * SCOPE: this check covers objectives 3.1.5[a] and 3.1.5[b] ONLY.
+ *   The grant inventory (privilege field per system) identifies privileged
+ *   accounts [a]; the role-matrix/waiver test checks that privileged access
+ *   is authorized per least privilege [b]. SECURITY FUNCTIONS ([c],[d]) are
+ *   OUT OF MODEL -- a PASS here says nothing about them.
+ * SSP-DEFINED PARAMETERS (org policy, NOT NIST-mandated values):
+ *   roleAuthorizations matrix, waiver register, and the benign-privilege
+ *   enum (scenario.policy.benignPrivileges) are Northwind SSP-defined.
+ *
+ * Property checked (least privilege for privileged accounts):
+ *   For every user u and every access grant g of u:
+ *     g.privilege NOT IN policy.benignPrivileges  =>   (fail-closed: any
+ *       unknown/non-benign privilege value counts as elevated)
+ *          g.system is in scenario.roleAuthorizations[u.role]
+ *       OR there exists an approved waiver w with
+ *          w.userId == u.id AND w.system == g.system
+ *          AND w.approvedBy is a non-empty string
+ *          AND Date.parse(w.expires) >= Date.parse(scenario.asOf)
+ *
+ * Default scenario contains EXACTLY ONE violation:
+ *   Dana Reyes (Mechanical Engineer) still holds admin on the ITAR CAD
+ *   vault from a March data-migration ticket that was never revoked.
+ * Precision witnesses (legitimately CLEARED, must NOT be flagged):
+ *   - Priya Sharma: admin on 3 systems, but her role authorizes it.
+ *   - Marcus Webb: admin on the CAD vault, but under an unexpired,
+ *     CISO-approved waiver (date comparison, not name matching).
+ * ========================================================================== */
+
+window.CONTROLS = window.CONTROLS || {};
+
+window.CONTROLS["least-privilege-admin"] = {
+  id: "least-privilege-admin",
+  title: "Least Privilege: Admin Rights Match Role",
+  family: "AC.L2-3.1.5 [a],[b]",
+
+  plainEnglish:
+    "Nobody keeps administrator access they don't need for their job -- every admin right must be justified by the person's role or a current, approved exception. " +
+    "(Covers 800-171A objectives 3.1.5[a] and [b]: privileged accounts identified and authorized per least privilege. Least privilege for SECURITY FUNCTIONS -- objectives [c] and [d] -- is outside this check's data model; a PASS makes no claim about it.)",
+
+  propertyText:
+    "FORALL  user u, FORALL  grant g  in  u.grants:  g.privilege  not in  SSP.benignPrivileges   =>   " +
+    "( g.system  in  roleAuthorizations[u.role] )   OR   " +
+    "( EXISTS  waiver w: w.userId = u.id  AND  w.system = g.system  AND  w.approvedBy != \"\"  AND  w.expires >= asOf )\n" +
+    "-- scope: 800-171A 3.1.5[a],[b] only; security functions ([c],[d]) not modeled.\n" +
+    "-- fail-closed: any privilege value outside the SSP benign enum counts as elevated.",
+
+  scenario: {
+    org: "Northwind Defense Systems",
+    asOf: "2026-07-03T12:00:00",
+
+    // SSP-defined policy parameters (Northwind SSP; NOT NIST-mandated values).
+    // benignPrivileges: the ONLY privilege levels treated as non-elevated.
+    // Anything else ("admin", "root", "Administrator", typos, null) is
+    // treated as elevated -- fail-closed.
+    policy: {
+      source: "Northwind SSP (SSP-defined parameters; NIST 800-171r2 3.1.5 mandates the principle, not these values)",
+      benignPrivileges: ["user"]
+    },
+
+    systems: [
+      { id: "cad-vault",      name: "ITAR CAD Vault",          dataClass: "ITAR / CUI" },
+      { id: "cui-fileshare",  name: "CUI Program Fileshare",   dataClass: "CUI"        },
+      { id: "erp",            name: "Manufacturing ERP",        dataClass: "FCI"        }
+    ],
+
+    // SSP-defined: which systems each role is authorized to hold ELEVATED
+    // (non-benign) privilege on.
+    roleAuthorizations: {
+      "IT Systems Administrator": ["cad-vault", "cui-fileshare", "erp"],
+      "Mechanical Engineer":      [],
+      "Security Engineer":        [],
+      "Contracts Manager":        []
+    },
+
+    // SSP-defined: approved, time-boxed exceptions to the role matrix.
+    // A waiver only counts if approvedBy is a non-empty approver string.
+    waivers: [
+      {
+        userId: "mwebb",
+        system: "cad-vault",
+        reason: "ITAR export-audit tooling support",
+        approvedBy: "CISO (K. Alvarez)",
+        expires: "2026-09-30T00:00:00"
+      }
+    ],
+
+    users: [
+      {
+        id: "psharma",
+        name: "Priya Sharma",
+        role: "IT Systems Administrator",
+        grants: [
+          { system: "cad-vault",     privilege: "admin", grantedOn: "2024-01-08", grantedVia: "role provisioning" },
+          { system: "cui-fileshare", privilege: "admin", grantedOn: "2024-01-08", grantedVia: "role provisioning" },
+          { system: "erp",           privilege: "admin", grantedOn: "2024-01-08", grantedVia: "role provisioning" }
+        ]
+      },
+      {
+        id: "dreyes",
+        name: "Dana Reyes",
+        role: "Mechanical Engineer",
+        grants: [
+          // THE PLANTED VIOLATION: emergency admin from a migration, never revoked.
+          { system: "cad-vault",     privilege: "admin", grantedOn: "2026-03-14", grantedVia: "emergency ticket NW-4412 (PDM data migration)" },
+          { system: "cui-fileshare", privilege: "user",  grantedOn: "2025-06-02", grantedVia: "role provisioning" }
+        ]
+      },
+      {
+        id: "mwebb",
+        name: "Marcus Webb",
+        role: "Security Engineer",
+        grants: [
+          // Admin outside the role matrix, but covered by an ACTIVE waiver -> cleared.
+          { system: "cad-vault",     privilege: "admin", grantedOn: "2026-05-20", grantedVia: "waiver: ITAR export-audit tooling support" },
+          { system: "cui-fileshare", privilege: "user",  grantedOn: "2024-11-11", grantedVia: "role provisioning" }
+        ]
+      },
+      {
+        id: "etorres",
+        name: "Elena Torres",
+        role: "Contracts Manager",
+        grants: [
+          { system: "cui-fileshare", privilege: "user",  grantedOn: "2023-09-01", grantedVia: "role provisioning" },
+          { system: "erp",           privilege: "user",  grantedOn: "2023-09-01", grantedVia: "role provisioning" }
+        ]
+      }
+    ]
+  },
+
+  toggles: [
+    {
+      label: "Revoke Dana's leftover CAD Vault admin (downgrade to standard user)",
+      apply: function (scn) {
+        // Work on a deep copy so the original scenario is never mutated.
+        var fixed = JSON.parse(JSON.stringify(scn));
+        for (var i = 0; i < fixed.users.length; i++) {
+          var u = fixed.users[i];
+          if (u.id !== "dreyes") continue;
+          for (var j = 0; j < u.grants.length; j++) {
+            var g = u.grants[j];
+            if (g.system === "cad-vault" && g.privilege === "admin") {
+              g.privilege = "user";
+              g.grantedVia = "downgraded 2026-07-03: least-privilege review (was " + g.grantedVia + ")";
+            }
+          }
+        }
+        return fixed;
+      }
+    }
+  ],
+
+  check: function (scn) {
+    var findings = [];
+    var asOfMs = Date.parse(scn.asOf);
+
+    // SSP-defined benign-privilege enum (normalized). Fail-closed: a grant is
+    // ELEVATED unless its privilege exactly matches a benign entry.
+    var benignRaw = (scn.policy && scn.policy.benignPrivileges) || ["user"];
+    var benign = [];
+    for (var b = 0; b < benignRaw.length; b++) {
+      benign.push(String(benignRaw[b]).trim().toLowerCase());
+    }
+
+    function isElevated(priv) {
+      return benign.indexOf(String(priv).trim().toLowerCase()) === -1;
+    }
+
+    function systemName(sysId) {
+      for (var s = 0; s < scn.systems.length; s++) {
+        if (scn.systems[s].id === sysId) return scn.systems[s].name;
+      }
+      return sysId;
+    }
+
+    function activeWaiver(userId, sysId) {
+      var ws = scn.waivers || [];
+      for (var w = 0; w < ws.length; w++) {
+        if (ws[w].userId === userId &&
+            ws[w].system === sysId &&
+            typeof ws[w].approvedBy === "string" &&
+            ws[w].approvedBy.trim() !== "" &&              // unapproved waiver never clears
+            Date.parse(ws[w].expires) >= asOfMs) {
+          return ws[w];
+        }
+      }
+      return null;
+    }
+
+    for (var i = 0; i < scn.users.length; i++) {
+      var u = scn.users[i];
+      var authorized = (scn.roleAuthorizations && scn.roleAuthorizations[u.role]) || [];
+
+      for (var j = 0; j < u.grants.length; j++) {
+        var g = u.grants[j];
+        if (!isElevated(g.privilege)) continue;             // SSP-benign privilege: out of scope
+        if (authorized.indexOf(g.system) !== -1) continue;  // role authorizes it (SSP matrix)
+        if (activeWaiver(u.id, g.system)) continue;         // current, approver-signed exception
+
+        findings.push({
+          who: u.name,
+          detail: u.name + " (" + u.role + ") holds elevated privilege \"" + String(g.privilege) +
+                  "\" on " + systemName(g.system) +
+                  ", which their role does not authorize and no active approved waiver covers.",
+          fields: {
+            "User":            u.name + " (" + u.id + ")",
+            "Role":            u.role,
+            "System":          systemName(g.system) + " [" + g.system + "]",
+            "Privilege":       String(g.privilege) + " (elevated: not in SSP benign enum [" + benignRaw.join(", ") + "])",
+            "Granted on":      g.grantedOn,
+            "Granted via":     g.grantedVia,
+            "Role authorizes elevated on": authorized.length ? authorized.join(", ") : "(none)",
+            "Active waiver":   "none as of " + scn.asOf,
+            "Requirement (NIST 800-171r2 3.1.5, verbatim)":
+              "\"Employ the principle of least privilege, including for specific security functions and privileged accounts.\"",
+            "Objectives covered": "800-171A 3.1.5[a],[b] only -- security functions [c],[d] not modeled",
+            "Parameter source": "role matrix, waiver register, benign-privilege enum: Northwind SSP-defined (not NIST-mandated values)"
+          }
+        });
+      }
+    }
+
+    return { verdict: findings.length === 0 ? "PASS" : "FAIL", findings: findings };
+  }
+};
+
+</script>
+<script>
+/* mfa-on-cui.control.js */
+// Control module: mfa-on-cui (IA.L2-3.5.3)
+// Pure browser JS. No imports, no Node-only APIs. Deterministic.
+//
+// GROUNDED against NIST SP 800-171 Rev. 2, requirement 3.5.3 (verbatim):
+//   "Use multifactor authentication for local and network access to privileged
+//    accounts and for network access to non-privileged accounts."
+// Assessment objectives (NIST SP 800-171A / CMMC AG Level 2, IA.L2-3.5.3):
+//   [a] privileged accounts are identified;
+//   [b] MFA is implemented for local access to privileged accounts;
+//   [c] MFA is implemented for network access to privileged accounts;
+//   [d] MFA is implemented for network access to non-privileged accounts.
+// NOTE the carve-out: LOCAL access by a NON-privileged account is the one
+// cell 3.5.3 does NOT require MFA for (such logins still need ordinary
+// identification/authentication under 3.5.1/3.5.2 -- just not multifactor).
+// 3.5.3 is a privileged x access-vector matrix, not a blanket
+// "MFA everywhere" rule. Scope: in-scope assets per the CMMC Scoping Guide =
+// CUI Assets AND Security Protection Assets (which asset is which is defined
+// by the org's SSP asset inventory, not by NIST).
+
+window.CONTROLS = window.CONTROLS || {};
+window.CONTROLS["mfa-on-cui"] = (function () {
+
+  // -- helpers (pure) -------------------------------------------------------
+
+  function deepCopy(o) {
+    return JSON.parse(JSON.stringify(o));
+  }
+
+  function systemById(scn, id) {
+    for (var i = 0; i < scn.systems.length; i++) {
+      if (scn.systems[i].id === id) return scn.systems[i];
+    }
+    return null;
+  }
+
+  // In-scope for IA.L2-3.5.3 = CUI Assets + Security Protection Assets.
+  // The categorization itself is SSP-defined (scenario.policy.assetInventorySource).
+  function inScope(sys) {
+    return sys.assetCategory === "CUI Asset" ||
+           sys.assetCategory === "Security Protection Asset";
+  }
+
+  // The 3.5.3 matrix: MFA is required on an access edge iff the account is
+  // privileged (any vector) OR the vector is network (any account).
+  // Equivalently: the ONLY cell 3.5.3 leaves without an MFA requirement is
+  // non-privileged x local.
+  // FAIL-CLOSED: only the exact vector "local" earns the carve-out. Any
+  // other value (typo, "remote", missing) is treated as network access and
+  // therefore requires MFA -- bad data must not silently grant single-factor.
+  function mfaRequired(user, edge) {
+    return user.privileged === true || edge.vector !== "local";
+  }
+
+  // -- control object -------------------------------------------------------
+
+  return {
+    id: "mfa-on-cui",
+
+    title: "MFA per the 3.5.3 matrix (privileged x local/network)",
+
+    family: "IA.L2-3.5.3",
+
+    plainEnglish:
+      "Privileged accounts need multi-factor authentication every time they " +
+      "log in, whether at the console or over the network. Non-privileged " +
+      "accounts need MFA only for network access -- a LOCAL login by a " +
+      "non-privileged user is the one cell of the matrix where 3.5.3 does " +
+      "not require MFA (it still has to be authenticated under 3.5.1/3.5.2, " +
+      "just not with a second factor). In scope: systems holding CUI and " +
+      "the security systems that protect them, as categorized in the SSP " +
+      "asset inventory.",
+
+    propertyText:
+      "FORALL  account u  in  users, FORALL  access a  in  u.access, s = system(a): " +
+      "inScope(s)  AND  (u.privileged  OR  a.vector = network)  =>  a.mfa",
+
+    scenario: {
+      org: "Northwind Defense Systems",
+      asOf: "2026-07-03T12:00:00",
+
+      // SSP-defined parameters (org decisions, NOT NIST constants).
+      // Every finding cites which claims come from NIST verbatim vs from here.
+      policy: {
+        assetInventorySource:
+          "Northwind SSP v3.2, section 2.1 -- CMMC asset inventory " +
+          "(assigns each system its asset category; SSP-defined)",
+        scopeRule:
+          "In-scope for IA.L2-3.5.3: assets categorized as CUI Asset or " +
+          "Security Protection Asset (CMMC Level 2 Scoping Guide)"
+      },
+
+      systems: [
+        { id: "cad-vault",  name: "ITAR CAD Vault (drone airframe drawings)",   assetCategory: "CUI Asset" },
+        { id: "cui-gitlab", name: "Engineering GitLab (CUI enclave)",           assetCategory: "CUI Asset" },
+        { id: "shop-cnc",   name: "Shop-floor CNC workstation (ITAR toolpaths)", assetCategory: "CUI Asset" },
+        { id: "siem",       name: "Splunk SIEM (monitors the CUI enclave)",     assetCategory: "Security Protection Asset" },
+        { id: "wiki",       name: "Corporate Wiki (public-facing marketing)",   assetCategory: "Out of scope" }
+      ],
+
+      // Access edges carry the vector (local|network) and whether that
+      // specific access path is MFA-protected.
+      users: [
+        {
+          id: "alice.nguyen",
+          name: "Alice Nguyen",
+          role: "Lead Systems Engineer",
+          privileged: false,
+          access: [
+            { system: "cad-vault",  vector: "network", mfa: true },
+            { system: "cui-gitlab", vector: "network", mfa: true }
+          ]
+          // non-privileged, network access to CUI, MFA on => objective [d] met
+        },
+        {
+          id: "bob.reyes",
+          name: "Bob Reyes",
+          role: "Manufacturing Contractor",
+          privileged: false,
+          access: [
+            { system: "cad-vault", vector: "network", mfa: false }
+          ]
+          // <-- PLANTED VIOLATION: non-privileged NETWORK access to a CUI
+          //     asset with password only. Exactly the cell 3.5.3[d] forbids.
+        },
+        {
+          id: "frank.osei",
+          name: "Frank Osei",
+          role: "CNC Machinist",
+          privileged: false,
+          access: [
+            { system: "shop-cnc", vector: "local", mfa: false }
+          ]
+          // PRECISION WITNESS (the carve-out): non-privileged LOCAL console
+          // login, single-factor => 3.5.3 imposes no MFA requirement on
+          // this cell. A blanket "MFA everywhere" checker would false-flag
+          // him.
+        },
+        {
+          id: "ivan.petrov",
+          name: "Ivan Petrov",
+          role: "Infrastructure Administrator",
+          privileged: true,
+          access: [
+            { system: "siem",       vector: "local",   mfa: true },
+            { system: "cui-gitlab", vector: "network", mfa: true }
+          ]
+          // PRECISION WITNESS (scope + privileged rows of the matrix):
+          // privileged account, so MFA required on BOTH vectors [b][c] --
+          // and the SIEM is in scope as a Security Protection Asset even
+          // though it holds no CUI itself.
+        },
+        {
+          id: "dana.whitfield",
+          name: "Dana Whitfield",
+          role: "Marketing Coordinator",
+          privileged: false,
+          access: [
+            { system: "wiki", vector: "network", mfa: false }
+          ]
+          // MFA off, but the wiki is out of scope per the SSP asset
+          // inventory => legitimately CLEARED.
+        },
+        {
+          id: "svc-cam-export",
+          name: "svc-cam-export (service account)",
+          role: "CAM toolpath export bot",
+          privileged: false,
+          access: [
+            { system: "cui-gitlab", vector: "network", mfa: true }
+          ]
+          // service account on CUI enclave, hardware-token MFA => compliant
+        }
+      ]
+    },
+
+    toggles: [
+      {
+        label: "Enroll Bob Reyes in MFA (issue a FIDO2 key for his CAD Vault network logins)",
+        apply: function (scn) {
+          var fixed = deepCopy(scn); // never mutate the caller's object
+          for (var i = 0; i < fixed.users.length; i++) {
+            if (fixed.users[i].id !== "bob.reyes") continue;
+            for (var j = 0; j < fixed.users[i].access.length; j++) {
+              if (fixed.users[i].access[j].system === "cad-vault") {
+                fixed.users[i].access[j].mfa = true;
+              }
+            }
+          }
+          return fixed;
+        }
+      }
+    ],
+
+    // Pure evaluation of propertyText over scn.
+    // FAIL iff some access edge to an in-scope asset requires MFA under the
+    // 3.5.3 matrix (privileged account on any vector, OR any account over
+    // the network) and that edge is not MFA-protected.
+    check: function (scn) {
+      var findings = [];
+      var cleared = [];
+
+      for (var u = 0; u < scn.users.length; u++) {
+        var user = scn.users[u];
+        var userViolations = 0;
+        var inScopeEdges = 0;
+        var okBits = [];
+
+        for (var a = 0; a < user.access.length; a++) {
+          var edge = user.access[a];
+          var sys = systemById(scn, edge.system);
+          if (!sys) continue;
+
+          if (!inScope(sys)) continue; // out of scope per SSP asset inventory
+          inScopeEdges++;
+
+          if (mfaRequired(user, edge)) {
+            if (edge.mfa !== true) {
+              userViolations++;
+              // concrete violating record: the exact (account, system,
+              // vector) cell of the matrix that fails
+              var cell = user.privileged
+                ? (edge.vector === "local"
+                    ? "3.5.3[b] -- MFA for local access to privileged accounts"
+                    : "3.5.3[c] -- MFA for network access to privileged accounts")
+                : "3.5.3[d] -- MFA for network access to non-privileged accounts";
+              findings.push({
+                who: user.name,
+                detail:
+                  user.name + " (" + user.role + ") has " + edge.vector +
+                  " access to " + sys.name + " with no MFA -- " +
+                  (user.privileged
+                    ? "privileged accounts require MFA on every access vector."
+                    : "network access requires MFA even for non-privileged accounts."),
+                fields: {
+                  "Account": user.id,
+                  "Role": user.role,
+                  "Privileged": user.privileged ? "yes" : "no",
+                  "Access": sys.name + " via " + edge.vector,
+                  "Asset category": sys.assetCategory + " (per " + scn.policy.assetInventorySource + ")",
+                  "MFA on this access": "no",
+                  "Failed objective": cell,
+                  "Requirement": "IA.L2-3.5.3, NIST SP 800-171 Rev. 2 (verbatim): " +
+                    "\"Use multifactor authentication for local and network " +
+                    "access to privileged accounts and for network access to " +
+                    "non-privileged accounts.\""
+                }
+              });
+            } else {
+              okBits.push("MFA on for " + edge.vector + " access to " + sys.name);
+            }
+          } else {
+            // the one cell with no 3.5.3 MFA requirement: non-privileged x local
+            okBits.push(
+              "single-factor local access to " + sys.name +
+              " -- 3.5.3 requires no MFA for non-privileged local access " +
+              "(authentication itself is still required by 3.5.1/3.5.2)"
+            );
+          }
+        }
+
+        if (userViolations === 0) {
+          cleared.push({
+            who: user.name,
+            detail:
+              inScopeEdges === 0
+                ? user.name + " touches no in-scope asset (CUI Asset or " +
+                  "Security Protection Asset, per the SSP asset inventory) -- " +
+                  "MFA state is out of scope for this control."
+                : user.name + " (" + (user.privileged ? "privileged" : "non-privileged") +
+                  "): " + okBits.join("; ") + "."
+          });
+        }
+      }
+
+      return {
+        verdict: findings.length === 0 ? "PASS" : "FAIL",
+        findings: findings,
+        cleared: cleared // extra context for the UI; not part of the verdict
+      };
+    }
+  };
+})();
+
+</script>
+<script>
+/* session-lock.control.js */
+/* ============================================================================
+ * Control module: session-lock  (AC.L2-3.1.10)
+ * CMMC / NIST 800-171 interactive demo -- pure browser JS, no imports.
+ *
+ * NIST SP 800-171 Rev 2, 3.1.10 (verbatim): "Use session lock with
+ * pattern-hiding displays to prevent access and viewing of data after a
+ * period of inactivity."
+ *
+ * NIST SP 800-171A / CMMC L2 assessment objectives (verbatim):
+ *   [a] the period of inactivity after which the system initiates a session
+ *       lock is defined;
+ *   [b] access to the system and viewing of data is prevented by initiating
+ *       a session lock after the defined period of inactivity;
+ *   [c] previously visible information is concealed via a pattern-hiding
+ *       display after the defined period of inactivity.
+ *
+ * IMPORTANT (grounding): NIST mandates NO specific number of minutes -- the
+ * inactivity period is ORGANIZATION-defined (objective [a]). The 15-minute
+ * figure below is Northwind's SSP-defined parameter, and every finding cites
+ * it as such, never as a NIST constant. Pattern-hiding ([c]) is a mandatory
+ * conjunct of the requirement itself: a system that locks on time but still
+ * shows the document on the lock screen FAILS.
+ *
+ * Property: the SSP must define a session-lock inactivity period, and every
+ * system that stores or processes CUI must have a session lock that
+ * (a) is enabled, (b) fires within the SSP-defined period, and (c) conceals
+ * previously visible information with a pattern-hiding display. Non-CUI
+ * systems are out of scope (the checker must be precise, not blunt).
+ * ==========================================================================*/
+
+window.CONTROLS = window.CONTROLS || {};
+window.CONTROLS["session-lock"] = {
+  id: "session-lock",
+  title: "Session Lock on CUI Systems",
+  family: "AC.L2-3.1.10",
+
+  plainEnglish:
+    "Any computer that handles Controlled Unclassified Information must lock its screen by itself within the inactivity period Northwind defines in its SSP (currently 15 minutes -- NIST sets no specific number), and the lock screen must actually hide what was on screen (a pattern-hiding display). Locking on time while still showing the document is a violation.",
+
+  propertyText:
+    "policy.sessionLockTimeoutMinutes is defined  AND  (FORALL  system s  in  systems : s.cui = true  =>  (s.sessionLock.enabled = true  AND  s.sessionLock.timeoutMinutes != null  AND  s.sessionLock.timeoutMinutes <= policy.sessionLockTimeoutMinutes  AND  s.sessionLock.concealsDisplay = true))",
+
+  scenario: {
+    org: "Northwind Defense Systems",
+    asOf: "2026-07-03T12:00:00",
+    // SSP-defined parameters (organization-defined per 800-171A 3.1.10[a]).
+    // NIST 800-171 Rev 2 mandates no specific duration; 15 min is Northwind's choice.
+    policy: {
+      sspSource: "Northwind SSP v3.2, control AC.L2-3.1.10",
+      sessionLockTimeoutMinutes: 15
+    },
+    systems: [
+      {
+        id: "CAD-VAULT-01",
+        name: "ITAR CAD Vault (SolidWorks PDM)",
+        cui: true,
+        itar: true,
+        owner: "eng-infrastructure",
+        sessionLock: { enabled: true, timeoutMinutes: 10, concealsDisplay: true, source: "GPO: NW-CUI-Workstation-Baseline" },
+        lastConfigReview: "2026-06-20T09:00:00"
+      },
+      {
+        id: "CUI-FILE-SRV",
+        name: "CUI File Share (contract deliverables, drawings)",
+        cui: true,
+        itar: false,
+        owner: "it-ops",
+        // PLANTED VIOLATION (objective [c]): after the March timeout complaints
+        // (ticket HD-4471), helpdesk reverted the RDP lock timeout to the
+        // 15-minute SSP baseline -- but also enabled "show session preview on
+        // lock screen" so engineers could see document state at a glance.
+        // The session LOCKS ON TIME but the lock screen shows a live preview
+        // of the open CUI document: previously visible information is NOT
+        // concealed by a pattern-hiding display.
+        sessionLock: { enabled: true, timeoutMinutes: 15, concealsDisplay: false, source: "GPO: NW-FileServer-RDP (preview-on-lock enabled 2026-03-11, ticket HD-4471)" },
+        lastConfigReview: "2026-03-11T14:30:00"
+      },
+      {
+        id: "ENG-WKSTN-07",
+        name: "Propulsion engineering workstation (M. Alvarez)",
+        cui: true,
+        itar: true,
+        owner: "eng-propulsion",
+        // Exactly at the SSP-defined 15-minute boundary -- compliant. Shows the
+        // checker enforces <= period, not < period.
+        sessionLock: { enabled: true, timeoutMinutes: 15, concealsDisplay: true, source: "GPO: NW-CUI-Workstation-Baseline" },
+        lastConfigReview: "2026-06-20T09:00:00"
+      },
+      {
+        id: "LOBBY-KIOSK-01",
+        name: "Visitor lobby kiosk (public marketing site only)",
+        cui: false,
+        itar: false,
+        owner: "facilities",
+        // Legitimately CLEARED: no CUI, so 3.1.10 does not apply here.
+        // A blunt checker would flag this; a precise one must not.
+        sessionLock: { enabled: false, timeoutMinutes: null, concealsDisplay: false, source: "local policy (kiosk mode)" },
+        lastConfigReview: "2026-05-02T10:00:00"
+      }
+    ],
+    users: [
+      { id: "malvarez", name: "Maria Alvarez", role: "Propulsion engineer", usesSystems: ["ENG-WKSTN-07", "CUI-FILE-SRV", "CAD-VAULT-01"] },
+      { id: "bchen",    name: "Bob Chen",      role: "IT helpdesk",         usesSystems: ["CUI-FILE-SRV"] },
+      { id: "visitor",  name: "(walk-in visitors)", role: "Guest",          usesSystems: ["LOBBY-KIOSK-01"] }
+    ]
+  },
+
+  toggles: [
+    {
+      label: "Enable the pattern-hiding lock screen on the CUI file server (disable preview-on-lock)",
+      apply: function (scn) {
+        // Work on a deep copy so the original scenario object is never mutated.
+        var fixed = JSON.parse(JSON.stringify(scn));
+        for (var i = 0; i < fixed.systems.length; i++) {
+          var s = fixed.systems[i];
+          if (s.id === "CUI-FILE-SRV") {
+            s.sessionLock.concealsDisplay = true;
+            s.sessionLock.source = "GPO: NW-FileServer-RDP (preview-on-lock disabled per HD-4471 follow-up)";
+            s.lastConfigReview = fixed.asOf;
+          }
+        }
+        return fixed;
+      }
+    }
+  ],
+
+  check: function (scn) {
+    var findings = [];
+    var policy = scn.policy || {};
+    var period = (typeof policy.sessionLockTimeoutMinutes === "number") ? policy.sessionLockTimeoutMinutes : null;
+
+    // Objective [a]: "the period of inactivity after which the system
+    // initiates a session lock is defined." This is an SSP-level obligation --
+    // if no period is defined, that is its own distinct finding, before any
+    // system is examined.
+    if (period === null) {
+      findings.push({
+        who: "SSP-POLICY",
+        detail: "No session-lock inactivity period is defined in the SSP -- 800-171A objective 3.1.10[a] ('the period of inactivity after which the system initiates a session lock is defined') fails at the policy level.",
+        fields: {
+          "Subject": "Organization SSP (policy parameter)",
+          "Parameter": "policy.sessionLockTimeoutMinutes",
+          "Value": "not set",
+          "Required": "a defined period of inactivity -- organization-defined per 800-171A 3.1.10[a]; NIST mandates no specific duration",
+          "SSP source": policy.sspSource || "unknown"
+        }
+      });
+    }
+
+    for (var i = 0; i < scn.systems.length; i++) {
+      var s = scn.systems[i];
+
+      // Scope: the property only quantifies over CUI systems.
+      if (!s.cui) continue;
+
+      var lock = s.sessionLock || {};
+      var enabled = lock.enabled === true;
+      var timeout = (typeof lock.timeoutMinutes === "number") ? lock.timeoutMinutes : null;
+      var conceals = lock.concealsDisplay === true;
+
+      var problems = [];
+      if (!enabled) {
+        problems.push("session lock is disabled on a CUI system (objective [b])");
+      } else if (timeout === null) {
+        problems.push("session lock has no inactivity timeout configured (objective [b])");
+      } else if (period !== null && timeout > period) {
+        problems.push("session lock timeout is " + timeout + " min, exceeding the " + period + "-min Northwind SSP-defined period (objective [b]; the period is SSP-defined, not a NIST constant)");
+      }
+      if (enabled && !conceals) {
+        problems.push("locks on time but the lock screen shows a preview of the open document -- previously visible information is not concealed by a pattern-hiding display (objective [c], verbatim NIST: 'session lock with pattern-hiding displays')");
+      }
+
+      if (problems.length > 0) {
+        findings.push({
+          who: s.id,
+          detail: s.name + ": " + problems.join("; ") + ".",
+          fields: {
+            "System": s.id,
+            "Name": s.name,
+            "Handles CUI": s.itar ? "yes (ITAR)" : "yes",
+            "Owner": s.owner,
+            "Lock enabled": String(enabled),
+            "Timeout (min)": timeout === null ? "not set" : String(timeout),
+            "SSP-defined period": period === null ? "not defined in SSP" : ("<= " + period + " min (Northwind SSP v3.2 -- org-defined, not a NIST constant)"),
+            "Conceals display": conceals ? "yes (pattern-hiding)" : "no -- screen contents visible while locked",
+            "Required": "enabled; locks within the SSP-defined period; pattern-hiding display (NIST 800-171 Rev 2, 3.1.10)",
+            "Config source": lock.source || "unknown",
+            "Last reviewed": s.lastConfigReview || "never"
+          }
+        });
+      }
+    }
+
+    return {
+      verdict: findings.length === 0 ? "PASS" : "FAIL",
+      findings: findings
+    };
+  }
+};
+
+</script>
+<script>
+/* separation-of-duties.control.js */
+// CMMC / NIST 800-171 demo control module: Separation of Duties
+// Practice AC.L2-3.1.4 (CMMC Level 2, Access Control domain)
+// Pure browser JS. No imports, no Node APIs, deterministic.
+//
+// GROUNDING (verified against NIST SP 800-171 Rev 2 + 800-171A / CMMC L2 assessment guide):
+//   Requirement 3.1.4 (verbatim): "Separate the duties of individuals to reduce the risk
+//   of malevolent activity without collusion."
+//   Assessment objectives (NIST SP 800-171A, verbatim):
+//     3.1.4[a] "the duties of individuals requiring separation are defined"
+//     3.1.4[b] "responsibilities for duties that require separation are assigned to
+//              separate individuals"
+//     3.1.4[c] "access privileges that enable individuals to exercise the duties that
+//              require separation are granted to separate individuals"
+//
+// COVERAGE NOTE: this checker evidences [a] (are conflicting duty pairs defined at all?)
+// and [b]/[c] as observable from duty-grant records (no single individual holds both
+// halves of a defined pair on the same system). WHICH duties conflict is ORGANIZATION-
+// DEFINED per 3.1.4[a] -- NIST does not enumerate them -- so the pairs live in the
+// scenario as an SSP-defined policy parameter and every finding cites that source.
+//
+// VACUOUS-PASS HARDENING: if a system defines zero conflicting duty pairs, objective
+// 3.1.4[a] has no evidence and every user satisfies the property vacuously. The checker
+// returns INDETERMINATE with a warning finding instead of a silent PASS.
+
+window.CONTROLS = window.CONTROLS || {};
+window.CONTROLS["separation-of-duties"] = {
+  id: "separation-of-duties",
+  title: "Separation of Duties",
+  family: "AC",
+  practice: "AC.L2-3.1.4",
+
+  plainEnglish:
+    "No single person may hold two conflicting duties on the same system -- " +
+    "for example, the person who submits a change can never also be the person who approves it. " +
+    "Which duty pairs conflict is organization-defined (3.1.4[a]): they come from Northwind's SSP, not from NIST.",
+
+  propertyText:
+    "FORALL  user u, FORALL  system s, FORALL  (d1, d2)  in  s.conflictingDutyPairs: " +
+    "NOT ( holds(u, d1, s)  AND  holds(u, d2, s) )\n" +
+    "precondition 3.1.4[a]: s.conflictingDutyPairs is nonempty (SSP-defined) -- " +
+    "else verdict is INDETERMINATE, never a vacuous PASS",
+
+  scenario: {
+    org: "Northwind Defense Systems",
+    asOf: "2026-07-03T12:00:00",
+
+    // SSP-defined policy parameter (3.1.4[a]). NIST 800-171 does NOT enumerate which
+    // duties conflict; the per-system conflictingDutyPairs below are the organization's
+    // own definition, sourced from its SSP. Findings cite this, never "NIST requires".
+    policy: {
+      parameterName: "conflictingDutyPairs",
+      source: "Northwind SSP, Access Control Policy -- separation-of-duties matrix",
+      sourceKind: "SSP-defined (organization-defined per 3.1.4[a]), not NIST-enumerated"
+    },
+
+    systems: [
+      {
+        id: "cad-vault",
+        name: "ITAR CAD Vault (CUI)",
+        classification: "CUI // ITAR",
+        // Duty pairs that a single user may never hold together on THIS system
+        // (SSP-defined; see scenario.policy):
+        conflictingDutyPairs: [
+          ["submit-change", "approve-change"],
+          ["request-access", "grant-access"]
+        ]
+      },
+      {
+        id: "erp",
+        name: "ERP / Procurement (FCI)",
+        classification: "FCI",
+        conflictingDutyPairs: [
+          ["create-vendor", "approve-payment"]
+        ]
+      }
+    ],
+    users: [
+      {
+        id: "dana.reyes",
+        name: "Dana Reyes",
+        role: "Senior Mechanical Engineer",
+        // PLANTED VIOLATION: Dana both submits AND approves changes on the ITAR CAD vault.
+        duties: [
+          { system: "cad-vault", duty: "submit-change",  grantedOn: "2025-11-04" },
+          { system: "cad-vault", duty: "approve-change", grantedOn: "2026-05-19" }
+        ]
+      },
+      {
+        id: "amir.khan",
+        name: "Amir Khan",
+        role: "Configuration Manager",
+        // CLEARED: approves changes on cad-vault but never submits them.
+        duties: [
+          { system: "cad-vault", duty: "approve-change", grantedOn: "2024-08-12" }
+        ]
+      },
+      {
+        id: "beth.osei",
+        name: "Beth Osei",
+        role: "Design Engineer",
+        // CLEARED (precision case): submits changes on cad-vault AND approves payments
+        // on the ERP -- two powerful duties, but on DIFFERENT systems and not a
+        // conflicting pair anywhere. A blunt checker would flag her; ours must not.
+        duties: [
+          { system: "cad-vault", duty: "submit-change",   grantedOn: "2025-02-01" },
+          { system: "erp",       duty: "approve-payment", grantedOn: "2025-02-01" }
+        ]
+      },
+      {
+        id: "carl.dietz",
+        name: "Carl Dietz",
+        role: "IT Administrator",
+        // CLEARED: grants access on cad-vault, requests nothing there.
+        duties: [
+          { system: "cad-vault", duty: "grant-access",  grantedOn: "2023-01-15" },
+          { system: "erp",       duty: "create-vendor", grantedOn: "2023-01-15" }
+        ]
+      }
+    ]
+  },
+
+  toggles: [
+    {
+      label: "Revoke Dana's 'approve change' duty on the CAD Vault (route approvals to the Change Board)",
+      apply: function (scn) {
+        // Work on a deep copy; never mutate the caller's object.
+        var fixed = JSON.parse(JSON.stringify(scn));
+        for (var i = 0; i < fixed.users.length; i++) {
+          var u = fixed.users[i];
+          if (u.id !== "dana.reyes") continue;
+          u.duties = u.duties.filter(function (d) {
+            return !(d.system === "cad-vault" && d.duty === "approve-change");
+          });
+        }
+        return fixed;
+      }
+    }
+  ],
+
+  // PURE evaluation of propertyText over scn. No hardcoded verdicts:
+  // it enumerates every user x system x conflicting duty pair and reports
+  // exactly the records that violate the property. Verdicts:
+  //   FAIL          -- at least one violating record (listed first)
+  //   INDETERMINATE -- no violations, but some system defines zero conflicting
+  //                    duty pairs (3.1.4[a] unevidenced; PASS would be vacuous)
+  //   PASS          -- no violations and every system has defined pairs
+  check: function (scn) {
+    var violations = [];
+    var warnings = [];
+    var pairSource =
+      (scn.policy && scn.policy.source)
+        ? "SSP-defined: " + scn.policy.source
+        : "SSP-defined (organization-defined per 3.1.4[a])";
+
+    // 3.1.4[a] definedness gate: a system with no defined pairs cannot be certified.
+    for (var gi = 0; gi < scn.systems.length; gi++) {
+      var gsys = scn.systems[gi];
+      var gpairs = gsys.conflictingDutyPairs || [];
+      if (gpairs.length === 0) {
+        warnings.push({
+          who: gsys.name,
+          detail:
+            "3.1.4[a] duties requiring separation not defined for " + gsys.name +
+            " -- NIST SP 800-171A objective 3.1.4[a] (verbatim: \"the duties of individuals " +
+            "requiring separation are defined\") has no evidence for this system: its SSP-defined " +
+            "conflictingDutyPairs list is empty. With no pairs defined, every user satisfies the " +
+            "property vacuously, so a PASS here would certify nothing. Verdict is INDETERMINATE " +
+            "until the SSP defines this system's separation-of-duties matrix.",
+          fields: {
+            "System": gsys.name + " [" + gsys.id + "]",
+            "Classification": gsys.classification,
+            "Assessment objective": "3.1.4[a] \"the duties of individuals requiring separation are defined\" (NIST SP 800-171A, verbatim)",
+            "Observed": "conflictingDutyPairs is empty -- parameter is " + pairSource,
+            "Why not PASS": "zero defined pairs makes the property vacuously true; the checker refuses to certify on vacuous evidence"
+          }
+        });
+      }
+    }
+
+    for (var ui = 0; ui < scn.users.length; ui++) {
+      var user = scn.users[ui];
+
+      for (var si = 0; si < scn.systems.length; si++) {
+        var sys = scn.systems[si];
+        var pairs = sys.conflictingDutyPairs || [];
+
+        // Duties this user holds on this system, keyed by duty name.
+        var held = {};
+        for (var di = 0; di < user.duties.length; di++) {
+          var d = user.duties[di];
+          if (d.system === sys.id) held[d.duty] = d;
+        }
+
+        for (var pi = 0; pi < pairs.length; pi++) {
+          var d1 = pairs[pi][0];
+          var d2 = pairs[pi][1];
+          if (held[d1] && held[d2]) {
+            var fields = {
+              "User": user.name + " (" + user.id + ")",
+              "System": sys.name + " [" + sys.id + "]",
+              "Conflicting duties": d1 + " + " + d2,
+              "Duty pair source": pairSource,
+              "Classification": sys.classification
+            };
+            fields["'" + d1 + "' granted"] = held[d1].grantedOn;
+            fields["'" + d2 + "' granted"] = held[d2].grantedOn;
+            violations.push({
+              who: user.name,
+              detail:
+                user.name + " (" + user.role + ") holds both '" + d1 +
+                "' and '" + d2 + "' on " + sys.name +
+                " -- a single actor can push a change end-to-end with no second set of eyes." +
+                " (Pair is " + pairSource + ".)",
+              fields: fields
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      verdict: violations.length > 0
+        ? "FAIL"
+        : (warnings.length > 0 ? "INDETERMINATE" : "PASS"),
+      findings: violations.concat(warnings)
+    };
+  }
+};
+
+</script>
+<script>
+(function(){
+  var C = window.CONTROLS || {};
+  // temporal (over-time) controls lead; point-in-time follow
+  var TEMPORAL = ["deprovision-cui","audit-review-cadence"];
+  var POINT = ["least-privilege-admin","mfa-on-cui","session-lock","separation-of-duties"];
+  var ORDER = TEMPORAL.concat(POINT);
+  var KIND = {}; TEMPORAL.forEach(function(id){KIND[id]="temporal";}); POINT.forEach(function(id){KIND[id]="point";});
+  var CHIP = {
+    "deprovision-cui":"Terminated-user CUI access",
+    "audit-review-cadence":"Audit-log review cadence",
+    "least-privilege-admin":"Least privilege",
+    "mfa-on-cui":"MFA on CUI",
+    "session-lock":"Session lock",
+    "separation-of-duties":"Separation of duties"
+  };
+  var KINDNOTE = {
+    temporal: 'This is a <b>time-based property</b>  -  it is about a window of events (an SLA / a cadence), not a single configuration snapshot. This is the class of control that needs temporal reasoning, and what a continuous-monitoring / cATO program is graded on.',
+    point: 'This is a <b>point-in-time property</b>  -  a configuration state checked as it stands. Table-stakes: necessary, but every tool can do it.'
+  };
+  var ROSTER = {
+    "deprovision-cui":      {list:function(s){return s.users;},   name:function(u){return u.name;}, sub:function(u){return u.role;},               who:function(u){return u.name+" ("+u.role+")";}},
+    "audit-review-cadence": {list:function(s){return s.systems;}, name:function(x){return x.name;}, sub:function(x){return x.handlesCUI?x.classification:"non-CUI - out of scope";}, who:function(x){return x.name;}},
+    "least-privilege-admin":{list:function(s){return s.users;},   name:function(u){return u.name;}, sub:function(u){return u.role;},               who:function(u){return u.name;}},
+    "mfa-on-cui":           {list:function(s){return s.users;},   name:function(u){return u.name;}, sub:function(u){return u.role;},               who:function(u){return u.name;}},
+    "session-lock":         {list:function(s){return s.systems;}, name:function(x){return x.name;}, sub:function(x){return x.cui?x.id:x.id+" - non-CUI, out of scope";}, who:function(x){return x.id;}},
+    "separation-of-duties": {list:function(s){return s.users;},   name:function(u){return u.name;}, sub:function(u){return u.role;},               who:function(u){return u.name;}}
+  };
+  var KW = {"for":1,"every":1,"FORALL":1,"EXISTS":1,"not":1,"NOT":1};
+  var OP = {"=>":1,"->":1,"==>":1,"IMPLIES":1,"AND":1,"OR":1,"in":1,"!=":1,">=":1,"<=":1,"IF":1,"THEN":1};
+
+  var state = {id:ORDER[0], fixed:false};
+
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function colorize(t){return esc(t).split(/(\s+)/).map(function(tok){
+    if(KW[tok]) return '<span class="kw">'+tok+'</span>';
+    if(OP[tok]) return '<span class="op">'+tok+'</span>';
+    return tok;}).join("");}
+  function hot(v){return /never|active|disabled|not set|\blate\b|exceed|violation|\bno\b|none/i.test(String(v));}
+  function scenarioFor(ctl){return state.fixed ? ctl.toggles[0].apply(JSON.parse(JSON.stringify(ctl.scenario))) : ctl.scenario;}
+
+  function buildPicker(){
+    var host = document.getElementById("picker"); host.innerHTML="";
+    [["temporal","Continuous  -  holds over time",TEMPORAL],["point","Point-in-time  -  config state",POINT]].forEach(function(grp){
+      var cls=grp[0], label=grp[1], ids=grp[2];
+      var box=document.createElement("div"); box.className="pgroup "+cls;
+      var lab=document.createElement("div"); lab.className="pglabel"; lab.innerHTML='<span class="tag">'+esc(label)+'</span>'; box.appendChild(lab);
+      var chips=document.createElement("div"); chips.className="chips";
+      ids.forEach(function(id){ if(!C[id]) return;
+        var b=document.createElement("button"); b.className="chip"+(id===state.id?" active":"");
+        b.innerHTML='<span class="fam">'+esc(C[id].family)+'</span><span class="ttl">'+esc(CHIP[id]||C[id].title)+'</span>';
+        b.onclick=function(){ state.id=id; state.fixed=false; render(); };
+        chips.appendChild(b);
+      });
+      box.appendChild(chips); host.appendChild(box);
+    });
+  }
+  function pulse(id){var e=document.getElementById(id); if(!e)return; e.classList.remove("live"); void e.offsetWidth; e.classList.add("live");}
+
+  function render(){
+    var ctl=C[state.id], scn=scenarioFor(ctl), ros=ROSTER[state.id], subjects=ros.list(scn)||[], kind=KIND[state.id];
+    buildPicker();
+    document.getElementById("ctx-fam").textContent=ctl.family;
+    document.getElementById("ctx-count").textContent=String(subjects.length);
+    var ck=document.getElementById("ctx-kind"); ck.textContent=(kind==="temporal"?"over-time":"point-in-time"); ck.className="v kind "+kind;
+
+    document.getElementById("s-plain").innerHTML='<span class="control-id">'+esc(ctl.family)+' &mdash;</span> '+esc(ctl.plainEnglish).replace(/CUI/g,'<span class="cui">CUI</span>');
+    var kn=document.getElementById("s-kindnote"); kn.className="kindnote "+kind; kn.innerHTML=KINDNOTE[kind];
+    document.getElementById("s-prop").innerHTML=colorize(ctl.propertyText);
+
+    var tog=document.getElementById("fix-toggle"); tog.checked=state.fixed;
+    document.getElementById("fix-label").textContent=ctl.toggles[0].label;
+    var st=document.getElementById("fix-state"); st.textContent=state.fixed?"Remediation applied":"Violation present"; st.className="state "+(state.fixed?"on":"off");
+
+    var t0=(window.performance&&performance.now)?performance.now():0;
+    var res=ctl.check(scn);
+    var t1=(window.performance&&performance.now)?performance.now():0;
+    var ms=t1-t0, msTxt=ms>=1?ms.toFixed(1)+" ms":"<1 ms";
+    document.getElementById("s-run").innerHTML='<span class="dot"></span> evaluated <b>'+subjects.length+'</b> subjects &middot; <b>'+res.findings.length+'</b> finding'+(res.findings.length===1?"":"s")+' &middot; resolved in <b>'+msTxt+'</b>';
+
+    var fail=res.verdict==="FAIL";
+    document.getElementById("stage-verdict").className="stage "+(fail?"crit":"pass");
+    document.getElementById("stage-evidence").className="stage "+(fail?"crit":"pass");
+    document.getElementById("v-node").innerHTML=fail?"&times;":"&check;";
+    document.getElementById("e-node").innerHTML=fail?"!":"&check;";
+
+    var vhost=document.getElementById("s-verdict");
+    if(fail){
+      var f0=res.findings[0], more=res.findings.length>1?" (and "+(res.findings.length-1)+" more)":"";
+      vhost.innerHTML='<div class="verdict fail"><div class="verdict-top"><div class="stamp"><small>Control status</small>FAIL</div></div><p>'+esc(f0.detail)+more+'</p></div>';
+    } else {
+      vhost.innerHTML='<div class="verdict pass"><div class="verdict-top"><div class="stamp"><small>Control status</small>PASS</div></div><p>No violating record in the evidence provided &mdash; the property holds across all '+subjects.length+' subjects assessed.</p></div>';
+    }
+
+    var ehost=document.getElementById("s-evidence");
+    document.getElementById("e-label").innerHTML=fail?"The proof &mdash; the exact violating record":"The proof &mdash; no violating record found";
+    if(fail){
+      var f=res.findings[0], rows="";
+      for(var k in f.fields){ if(!f.fields.hasOwnProperty(k))continue;
+        rows+='<div class="row"><div class="rk">'+esc(k)+'</div><div class="rv'+(hot(f.fields[k])?" hot":"")+'">'+esc(f.fields[k])+'</div></div>';}
+      ehost.innerHTML='<div class="rec"><div class="rechead">Counterexample &middot; finding '+esc(ctl.family)+' / 001</div>'+rows+'</div>';
+    } else {
+      ehost.innerHTML='<div class="pass-rec">&check; the verifier searched all '+subjects.length+' subjects in the evidence and found no record that violates the property.</div>';
+    }
+
+    var whoSet={}; res.findings.forEach(function(f){whoSet[f.who]=f;});
+    var tb=document.getElementById("s-roster"); tb.innerHTML="";
+    subjects.forEach(function(sub){
+      var hit=whoSet[ros.who(sub)], tr=document.createElement("tr");
+      var reason=hit?'<div class="rz">'+esc(hit.detail)+'</div>':'';
+      tr.innerHTML='<td><span class="name">'+esc(ros.name(sub))+'</span><div class="sub">'+esc(ros.sub(sub))+'</div>'+reason+'</td>'+
+        '<td style="text-align:right"><span class="pill '+(hit?"fail":"pass")+'">'+(hit?"VIOLATION":"CLEARED")+'</span></td>';
+      tb.appendChild(tr);
+    });
+    var viol=res.findings.length, cleared=subjects.length-viol;
+    document.getElementById("s-rosternote").innerHTML=fail
+      ? 'It did not flag every subject. '+cleared+' of '+subjects.length+' <b style="color:var(--green)">cleared</b> &mdash; each proven compliant one at a time &mdash; and '+viol+' failed with the record above. Not pattern-matching; proving the control per subject.'
+      : 'All '+subjects.length+' subjects <b style="color:var(--green)">cleared</b>. Flip the remediation back off to watch the exact violation re-surface.';
+
+    pulse("s-run"); pulse("s-verdict"); pulse("s-evidence");
+  }
+
+  document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; render(); });
+  render();
+})();
+</script>

@@ -229,7 +229,7 @@
 
     <div class="eyebrow">Elevate your CMMC</div>
     <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
-    <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; and the ones that matter most aren&rsquo;t configuration snapshots, they&rsquo;re the properties that must hold <b>continuously, across every event, over the whole monitoring window.</b> That&rsquo;s the part a checklist can&rsquo;t reach. Pick a control and see it evaluated, with the exact record behind every verdict.</p>
+    <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; each one an <b>executable rule an assessor can read, re-run, and try to break</b>, that hands back the exact violating record when it fails. The ones that matter most read your event history, not just a config snapshot. Pick a control and watch it evaluate, with the record behind every verdict.</p>
 
     <div class="howto">
       <span class="step"><b>1</b> Pick a control below</span>
@@ -326,16 +326,16 @@
       </div>
       <div class="c new">
         <h3>This</h3>
-        <p>A formal property, checked by a verifier that returns the exact violating record as its evidence &mdash; and for time-based controls, evaluated as a property over the <b>whole window</b>, not a single snapshot. Built to run continuously.</p>
+        <p>A formal rule, checked by a verifier that returns the exact violating record as its evidence. Deadline controls read your <b>event history</b> &mdash; the action and its revocation timestamps &mdash; so they catch access revoked late or never, including violations already patched over, which a point-in-time scan misses.</p>
       </div>
     </div>
 
     <div class="swap">
-      <b>Continuous is the hard part &mdash; and where this earns its keep.</b> Point-in-time config checks are table stakes; every tool has them. The controls that must hold <b>over time</b> &mdash; deprovisioning SLAs, review cadences, and the temporal assurance a cATO / continuous-monitoring program demands &mdash; are the ones that need real property verification. Same engine, any control, any framework you write.
+      <b>Deadline and event-history checks are where this earns its keep.</b> A screenshot shows a control existed at one moment; this reads your actual <b>event history</b> &mdash; the HR feed against the access log &mdash; so it catches access revoked late, or never, including violations already patched over that a point-in-time scan can&rsquo;t see. Same engine, any control, any framework you write.
     </div>
 
     <footer>
-      <span class="mark">Machine-checked control validation &middot; continuous by design</span>
+      <span class="mark">Machine-checked control validation &middot; every verdict re-runs from an executable check you can falsify</span>
       <span>Illustrative environment (&ldquo;Northwind Defense&rdquo;) &middot; synthetic evidence &middot; every verdict computed live in your browser &middot; prototype prepared for Gigit Security</span>
     </footer>
 
@@ -1883,7 +1883,7 @@ window.CONTROLS["separation-of-duties"] = {
     "separation-of-duties":"Separation of duties"
   };
   var KINDNOTE = {
-    temporal: 'This is a <b>time-based property</b>  -  it is about a window of events (an SLA / a cadence), not a single configuration snapshot. This is the class of control that needs temporal reasoning, and what a continuous-monitoring / cATO program is graded on.',
+    temporal: 'This is a <b>deadline / event-history check</b> -- it reads the timestamps in your evidence (an action and its deadline), so a violation stays on the record even after it is fixed. That is more than a current-state snapshot, and it is the kind of check a continuous-monitoring program is graded on.',
     point: 'This is a <b>point-in-time property</b>  -  a configuration state checked as it stands. Table-stakes: necessary, but every tool can do it.'
   };
   var ROSTER = {
@@ -1917,7 +1917,7 @@ window.CONTROLS["separation-of-duties"] = {
 
   function buildPicker(){
     var host = document.getElementById("picker"); host.innerHTML="";
-    [["temporal","Continuous  -  holds over time",TEMPORAL],["point","Point-in-time  -  config state",POINT]].forEach(function(grp){
+    [["temporal","Deadline & event-history checks",TEMPORAL],["point","Point-in-time config checks",POINT]].forEach(function(grp){
       var cls=grp[0], label=grp[1], ids=grp[2];
       var box=document.createElement("div"); box.className="pgroup "+cls;
       var lab=document.createElement("div"); lab.className="pglabel"; lab.innerHTML='<span class="tag">'+esc(label)+'</span>'; box.appendChild(lab);

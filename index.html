@@ -162,6 +162,33 @@
   .live{animation:flash .5s ease;}
   @keyframes flash{0%{opacity:.4; transform:translateY(4px);} 100%{opacity:1; transform:none;}}
   @media(prefers-reduced-motion:reduce){.live{animation:none;} .knob{transition:none;}}
+
+  .howto{display:flex; align-items:center; gap:10px 12px; flex-wrap:wrap; margin:18px 0 8px; padding:12px 15px; background:var(--sky-tint); border:1px solid var(--sky); border-radius:12px; font-size:13.5px; color:var(--navy);}
+  .howto .step{display:flex; align-items:center; gap:8px;}
+  .howto .step b{display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--sky-deep); color:#fff; font-family:var(--mono); font-size:12px; flex:0 0 auto;}
+  .howto .step em{font-style:normal; font-weight:600;}
+  .howto .arr{color:var(--sky-deep); font-weight:700;}
+  details.presenter{margin:0 0 6px;}
+  details.presenter summary{cursor:pointer; color:var(--sky-deep); font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; list-style:none; padding:3px 0;}
+  details.presenter summary::-webkit-details-marker{display:none;}
+  details.presenter .body{margin-top:8px; padding:12px 15px; border:1px dashed var(--line2); border-radius:10px; color:var(--slate); background:var(--card); font-size:13.5px; line-height:1.55;}
+  details.presenter .body b{color:var(--navy);}
+  a.reqlink{display:inline-flex; align-items:center; gap:6px; margin-top:11px; font-family:var(--mono); font-size:12.5px; color:var(--sky-deep); text-decoration:none; border-bottom:1px dashed var(--sky);}
+  a.reqlink:hover{color:var(--navy); border-bottom-color:var(--navy);}
+  a.control-id.lnk{color:var(--sky-deep); text-decoration:none; border-bottom:1px dashed var(--sky);}
+  a.control-id.lnk:hover{color:var(--navy);}
+  .runbtn{appearance:none; cursor:pointer; font-family:var(--mono); font-size:12.5px; color:#fff; background:var(--sky-deep); border:none; border-radius:8px; padding:8px 14px; margin-bottom:11px;}
+  .runbtn:hover{background:var(--navy);}
+  .runbtn:focus-visible{outline:2px solid var(--navy); outline-offset:2px;}
+  .trace{font-family:var(--mono); font-size:12.5px; margin-top:6px; display:flex; flex-direction:column; gap:3px; overflow-x:auto;}
+  .trace .tline{display:flex; align-items:center; gap:8px; color:var(--slate); animation:flash .28s ease; white-space:nowrap;}
+  .trace .thead{color:var(--sky-deep);}
+  .trace .tmark{flex:0 0 auto;}
+  .trace .tviol{color:var(--red);} .trace .tviol .tmark{color:var(--red);}
+  .trace .tok .tmark{color:var(--green);}
+  .trace .tvv{color:var(--red); font-weight:600;} .trace .tcc{color:var(--green);}
+  .trace .tdone{color:var(--navy); margin-top:5px; padding-top:7px; border-top:1px solid var(--line);}
+  @media(prefers-reduced-motion:reduce){.trace .tline{animation:none;}}
 </style>
 
 <div class="wrap">
@@ -175,6 +202,18 @@
     <div class="eyebrow">Elevate your CMMC</div>
     <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
     <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; and the ones that matter most aren&rsquo;t configuration snapshots, they&rsquo;re the properties that must hold <b>continuously, across every event, over the whole monitoring window.</b> That&rsquo;s the part a checklist can&rsquo;t reach. Pick a control and see it evaluated, with the exact record behind every verdict.</p>
+
+    <div class="howto">
+      <span class="step"><b>1</b> Pick a control below</span>
+      <span class="arr">&rarr;</span>
+      <span class="step"><b>2</b> Watch it check the evidence and catch the violation</span>
+      <span class="arr">&rarr;</span>
+      <span class="step"><b>3</b> Flip <em>Remediation</em> &mdash; the verdict turns to PASS</span>
+    </div>
+    <details class="presenter">
+      <summary>&#9656;&nbsp;Showing this to someone? A 20-second script</summary>
+      <div class="body">&ldquo;Here&rsquo;s the control in plain English, linked to the exact NIST requirement &mdash; click it and read it yourself. It runs against the evidence and catches the real violation, with the offending record as the proof. The threshold is <b>your</b> SSP number, not one we invented. Now watch&rdquo; &mdash; flip Remediation &mdash; &ldquo;the verdict re-derives live to PASS. Nothing here is pre-recorded.&rdquo;</div>
+    </details>
 
     <div class="picker" id="picker"></div>
 
@@ -191,6 +230,7 @@
         <div class="slabel">The control, in plain English</div>
         <div class="card">
           <div class="control-text" id="s-plain"></div>
+          <a class="reqlink" id="s-reqlink" href="#" target="_blank" rel="noopener">Read the exact NIST&nbsp;800-171 requirement at the source &#8599;</a>
           <div class="kindnote" id="s-kindnote"></div>
         </div>
       </div>
@@ -223,7 +263,11 @@
       <div class="stage">
         <div class="node">4</div>
         <div class="slabel">The check, against the actual evidence</div>
-        <div class="card"><div class="runline" id="s-run"></div></div>
+        <div class="card">
+          <button class="runbtn" id="run-btn" type="button">&#9654; Run the check</button>
+          <div class="runline" id="s-run"></div>
+          <div class="trace" id="s-trace"></div>
+        </div>
       </div>
 
       <div class="stage" id="stage-verdict">
@@ -1822,6 +1866,14 @@ window.CONTROLS["separation-of-duties"] = {
     "session-lock":         {list:function(s){return s.systems;}, name:function(x){return x.name;}, sub:function(x){return x.cui?x.id:x.id+" - non-CUI, out of scope";}, who:function(x){return x.id;}},
     "separation-of-duties": {list:function(s){return s.users;},   name:function(u){return u.name;}, sub:function(u){return u.role;},               who:function(u){return u.name;}}
   };
+  var SOURCE = {
+    "deprovision-cui":"https://csf.tools/reference/nist-sp-800-171/r2/3-9/3-9-2/",
+    "audit-review-cadence":"https://csf.tools/reference/nist-sp-800-171/r2/3-3/3-3-1/",
+    "least-privilege-admin":"https://csf.tools/reference/nist-sp-800-171/r2/3-1/3-1-5/",
+    "mfa-on-cui":"https://csf.tools/reference/nist-sp-800-171/r2/3-5/3-5-3/",
+    "session-lock":"https://csf.tools/reference/nist-sp-800-171/r2/3-1/3-1-10/",
+    "separation-of-duties":"https://csf.tools/reference/nist-sp-800-171/r2/3-1/3-1-4/"
+  };
   var KW = {"for":1,"every":1,"FORALL":1,"EXISTS":1,"not":1,"NOT":1};
   var OP = {"=>":1,"->":1,"==>":1,"IMPLIES":1,"AND":1,"OR":1,"in":1,"!=":1,">=":1,"<=":1,"IF":1,"THEN":1};
 
@@ -1845,7 +1897,7 @@ window.CONTROLS["separation-of-duties"] = {
       ids.forEach(function(id){ if(!C[id]) return;
         var b=document.createElement("button"); b.className="chip"+(id===state.id?" active":"");
         b.innerHTML='<span class="fam">'+esc(C[id].family)+'</span><span class="ttl">'+esc(CHIP[id]||C[id].title)+'</span>';
-        b.onclick=function(){ state.id=id; state.fixed=false; render(); };
+        b.onclick=function(){ state.id=id; state.fixed=false; runTrace(); };
         chips.appendChild(b);
       });
       box.appendChild(chips); host.appendChild(box);
@@ -1860,7 +1912,9 @@ window.CONTROLS["separation-of-duties"] = {
     document.getElementById("ctx-count").textContent=String(subjects.length);
     var ck=document.getElementById("ctx-kind"); ck.textContent=(kind==="temporal"?"over-time":"point-in-time"); ck.className="v kind "+kind;
 
-    document.getElementById("s-plain").innerHTML='<span class="control-id">'+esc(ctl.family)+' &mdash;</span> '+esc(ctl.plainEnglish).replace(/CUI/g,'<span class="cui">CUI</span>');
+    var src=SOURCE[state.id]||"#";
+    document.getElementById("s-plain").innerHTML='<a class="control-id lnk" href="'+src+'" target="_blank" rel="noopener">'+esc(ctl.family)+' &#8599;</a> &mdash; '+esc(ctl.plainEnglish).replace(/CUI/g,'<span class="cui">CUI</span>');
+    var rl=document.getElementById("s-reqlink"); if(rl){rl.href=src;}
     var kn=document.getElementById("s-kindnote"); kn.className="kindnote "+kind; kn.innerHTML=KINDNOTE[kind];
     document.getElementById("s-prop").innerHTML=colorize(ctl.propertyText);
 
@@ -1916,7 +1970,30 @@ window.CONTROLS["separation-of-duties"] = {
     pulse("s-run"); pulse("s-verdict"); pulse("s-evidence");
   }
 
+  var traceTimer=null;
+  function runTrace(){
+    render(); // full instant display, then stream the per-record scan below stage 4
+    if(traceTimer){clearTimeout(traceTimer);}
+    var ctl=C[state.id], scn=scenarioFor(ctl), ros=ROSTER[state.id], subjects=ros.list(scn)||[];
+    var res=ctl.check(scn), whoSet={}; res.findings.forEach(function(f){whoSet[f.who]=f;});
+    var tr=document.getElementById("s-trace"); if(!tr){return;}
+    tr.innerHTML='<div class="tline thead">&#9654; evaluating the property against '+subjects.length+' record'+(subjects.length===1?"":"s")+'&hellip;</div>';
+    var i=0;
+    (function step(){
+      if(i>=subjects.length){
+        var d=document.createElement("div"); d.className="tline tdone";
+        d.innerHTML='&#9642; done &middot; <b>'+res.findings.length+'</b> violation'+(res.findings.length===1?"":"s")+' &middot; verdict <b>'+res.verdict+'</b>';
+        tr.appendChild(d); return;
+      }
+      var sub=subjects[i], hit=whoSet[ros.who(sub)];
+      var line=document.createElement("div"); line.className="tline "+(hit?"tviol":"tok");
+      line.innerHTML='<span class="tmark">'+(hit?"&#10007;":"&#10003;")+'</span> '+esc(ros.name(sub))+(hit?' <span class="tvv">VIOLATION</span>':' <span class="tcc">cleared</span>');
+      tr.appendChild(line); i++;
+      traceTimer=setTimeout(step, 190);
+    })();
+  }
   document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; render(); });
-  render();
+  var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", runTrace); }
+  runTrace();
 })();
 </script>

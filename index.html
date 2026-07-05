@@ -189,9 +189,37 @@
   .trace .tvv{color:var(--red); font-weight:600;} .trace .tcc{color:var(--green);}
   .trace .tdone{color:var(--navy); margin-top:5px; padding-top:7px; border-top:1px solid var(--line);}
   @media(prefers-reduced-motion:reduce){.trace .tline{animation:none;}}
+
+  .legend{position:fixed; top:78px; right:24px; width:252px; max-height:calc(100vh - 110px); overflow:auto; z-index:50;
+    background:var(--card); border:1px solid var(--line2); border-radius:16px; box-shadow:0 12px 34px rgba(0,15,63,.14); padding:15px 16px; font-size:12.5px;}
+  .legend .lhead{display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-bottom:11px;}
+  .legend .lclose{appearance:none; border:none; background:none; cursor:pointer; color:var(--faint); font-size:17px; line-height:1; padding:0 2px;}
+  .legend .lclose:hover{color:var(--navy);}
+  .legend .lrow{display:grid; grid-template-columns:62px 1fr; gap:10px; align-items:start; margin-bottom:10px;}
+  .legend .lv{color:var(--slate); line-height:1.4;}
+  .legend .lk{font-family:var(--mono); font-size:10px; text-align:center; align-self:start;}
+  .legend .sfail{color:var(--red); font-weight:700; font-size:11px;} .legend .spass{color:var(--green); font-weight:700; font-size:11px;}
+  .legend .mkv{color:var(--red); font-size:14px;} .legend .mkc{color:var(--green); font-size:14px;}
+  .legend .cht{color:var(--sky-deep); background:var(--sky-tint); border:1px solid var(--sky); border-radius:9px; padding:2px 3px; font-size:9px;}
+  .legend .chp{color:var(--gray); background:var(--ground); border:1px solid var(--line); border-radius:9px; padding:2px 3px; font-size:9px;}
+  .legend .kssp{color:var(--amber); font-weight:700;}
+  .legend .lnote{margin-top:4px; padding-top:10px; border-top:1px solid var(--line); color:var(--slate); line-height:1.45;}
+  .legend .lnote b{font-family:var(--mono); color:var(--sky-deep); font-weight:600;}
+  @media(max-width:1260px){.legend{display:none;}}
 </style>
 
 <div class="wrap">
+  <aside class="legend" id="legend" aria-label="How to read this page">
+    <div class="lhead"><span>Reading this page</span><button class="lclose" id="lclose" type="button" aria-label="Hide legend" title="Hide">&times;</button></div>
+    <div class="lrow"><span class="lk sfail">FAIL</span><span class="lv">the property does not hold &mdash; a violating record exists</span></div>
+    <div class="lrow"><span class="lk spass">PASS</span><span class="lv">no violating record in the evidence provided</span></div>
+    <div class="lrow"><span class="lk mkv">&#10007;</span><span class="lv">this subject violates the control</span></div>
+    <div class="lrow"><span class="lk mkc">&#10003;</span><span class="lv">this subject is cleared</span></div>
+    <div class="lrow"><span class="lk cht">over&#8209;time</span><span class="lv">temporal &mdash; a property across a window of events</span></div>
+    <div class="lrow"><span class="lk chp">point</span><span class="lv">point&#8209;in&#8209;time &mdash; a single configuration state</span></div>
+    <div class="lrow"><span class="lk kssp">SSP</span><span class="lv">your own policy number (e.g. 24h) &mdash; never a NIST value</span></div>
+    <div class="lnote"><b>FORALL x&hellip; =&gt;</b> reads &ldquo;for every x, it must be that&hellip;&rdquo; &mdash; one precise rule, checked against every record.</div>
+  </aside>
   <div class="col">
 
     <div class="brandbar">
@@ -1908,7 +1936,7 @@ window.CONTROLS["separation-of-duties"] = {
   function render(){
     var ctl=C[state.id], scn=scenarioFor(ctl), ros=ROSTER[state.id], subjects=ros.list(scn)||[], kind=KIND[state.id];
     buildPicker();
-    document.getElementById("ctx-fam").textContent=ctl.family;
+    document.getElementById("ctx-fam").innerHTML='<a class="control-id lnk" href="'+(SOURCE[state.id]||"#")+'" target="_blank" rel="noopener">'+esc(ctl.family)+'</a>';
     document.getElementById("ctx-count").textContent=String(subjects.length);
     var ck=document.getElementById("ctx-kind"); ck.textContent=(kind==="temporal"?"over-time":"point-in-time"); ck.className="v kind "+kind;
 
@@ -1994,6 +2022,7 @@ window.CONTROLS["separation-of-duties"] = {
   }
   document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; render(); });
   var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", runTrace); }
+  var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(){ var lg=document.getElementById("legend"); if(lg){lg.style.display="none";} }; }
   runTrace();
 })();
 </script>

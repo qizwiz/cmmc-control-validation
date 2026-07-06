@@ -299,6 +299,11 @@
   .prop-key b{color:var(--sky-deep); font-family:var(--mono);}
   .picker-intro{margin:22px 0 2px; font-size:13.5px; color:var(--slate); line-height:1.55; max-width:72ch;}
   .picker-intro b{color:var(--navy);}
+  .legend.collapsed{width:auto; max-height:none; padding:0; overflow:visible; background:transparent; border:none; box-shadow:none;}
+  .legend.collapsed > *:not(.lhead){display:none;}
+  .legend.collapsed .lhead{margin:0; padding:8px 14px; background:var(--sky-tint); border:1px solid var(--sky); border-radius:20px; cursor:pointer;}
+  .legend.collapsed .lclose{display:none;}
+  .legend.collapsed .lhead > span::after{content:" \25B8"; color:var(--sky-deep); font-weight:700;}
   .doctree{margin-top:11px;}
   .doctree summary{cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--sky-deep); list-style:none;}
   .doctree summary::-webkit-details-marker{display:none;}
@@ -349,7 +354,6 @@
         <a class="navtab" data-nav="controls" href="#/controls">Controls</a>
         <a class="navtab" data-nav="extract" href="#/extract">Extract</a>
         <a class="navtab" data-nav="premium" href="#/premium">Premium</a>
-        <a class="navtab" data-nav="sources" href="#/sources">Sources</a>
       </nav>
       <div class="stickybar" id="stickybar">
         <div class="sb-left"><span class="sb-org">Northwind Defense Systems</span><span class="sb-ctl" id="sb-ctl">&mdash;</span><span class="sb-verdict" id="sb-verdict">&mdash;</span></div>
@@ -563,7 +567,6 @@ Spec == Init <span class="op">/\</span> [][Next]_vars <span class="op">/\</span>
       <p class="pr-foot">This is genuine formal verification (model-checking) &mdash; a harder guarantee than the checks above, and the reason a formal-methods specialist is in the room. The entry tier checks your evidence; this proves the process behind it. Re-runnable from the actual spec on request.</p>
     </section>
 
-      <section class="view" data-view="sources">
   <aside class="legend" id="legend" aria-label="Source documents">
     <div class="lhead"><span>Source documents</span><button class="lclose" id="lclose" type="button" aria-label="Hide" title="Hide">&times;</button></div>
     <div class="lsub">Every check is drafted from these governance sources &mdash; click any to open the original.</div>
@@ -575,7 +578,6 @@ Spec == Init <span class="op">/\</span> [][Next]_vars <span class="op">/\</span>
     <div class="ldoc ssp"><b>Northwind SSP</b><span>your own policy parameters (24h, 7d&hellip;) &mdash; not NIST values</span></div>
     <div class="lnote2">CMMC Level 2 assesses against <b>800-171 Rev 2</b> and its companion <b>800-171A</b> (per 32 CFR 170.17). NIST has since withdrawn <b>both</b> in favor of the Rev 3 editions, but CMMC does not use Rev 3 yet &mdash; so these references are deliberately the Rev 2-era versions.</div>
   </aside>
-      </section>
 
     </main>
 
@@ -3420,7 +3422,8 @@ window.CONTROLS["separation-of-duties"] = {
   }
   document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; state.fixedSet[state.id]=e.target.checked; render(); updateScore(); var tr=document.getElementById("s-trace"); if(tr){ tr.innerHTML='<div class="tline tdone">&#9642; re-evaluated with remediation '+(e.target.checked?"applied":"removed")+' &mdash; press <b>Run the check</b> to watch the scan again</div>'; } });
   var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", function(){ state.ran=true; runTrace(); }); }
-  var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(){ var lg=document.getElementById("legend"); if(lg){lg.style.display="none";} }; }
+  var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(e){ if(e&&e.stopPropagation){e.stopPropagation();} var lg=document.getElementById("legend"); if(lg){lg.classList.add("collapsed");} }; }
+  var lhd=document.querySelector("#legend .lhead"); if(lhd){ lhd.onclick=function(){ var lg=document.getElementById("legend"); if(lg&&lg.classList.contains("collapsed")){lg.classList.remove("collapsed");} }; }
   render();
   updateScore();
 
@@ -3483,7 +3486,7 @@ window.CONTROLS["separation-of-duties"] = {
 <script>
 /* view router -- additive; toggles [hidden] on one section at a time, deep-linkable via #/view */
 (function(){
-  var VIEWS=["overview","controls","extract","premium","sources"], DEFAULT="overview";
+  var VIEWS=["overview","controls","extract","premium"], DEFAULT="overview";
   var sec={}, tab={};
   VIEWS.forEach(function(v){
     sec[v]=document.querySelector('section[data-view="'+v+'"]');

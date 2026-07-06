@@ -206,6 +206,22 @@
   .legend .lnote{margin-top:4px; padding-top:10px; border-top:1px solid var(--line); color:var(--slate); line-height:1.45;}
   .legend .lnote b{font-family:var(--mono); color:var(--sky-deep); font-weight:600;}
   @media(max-width:1260px){.legend{display:none;}}
+
+  .sprs{display:grid; grid-template-columns:auto 1fr; gap:6px 20px; align-items:center; margin:16px 0 6px; padding:16px 18px;
+    background:var(--card); border:1px solid var(--line2); border-radius:14px; box-shadow:0 8px 24px rgba(0,15,63,.07);}
+  .sprs-num{font-family:var(--slab); font-weight:700; font-size:clamp(30px,5vw,46px); color:var(--navy); line-height:1; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .sprs-num small{font-family:var(--sans); font-size:15px; color:var(--faint); font-weight:600;}
+  .sprs-mid{min-width:0;}
+  .sprs-top{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-bottom:8px;}
+  .sprs-sub{text-transform:none; letter-spacing:0;}
+  .sprs-track{position:relative; height:9px; border-radius:6px; background:var(--ground); border:1px solid var(--line); overflow:hidden;}
+  .sprs-bar{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--sky),var(--sky-deep)); transition:width .35s cubic-bezier(.3,.8,.3,1);}
+  .sprs-mark{position:absolute; top:-3px; bottom:-3px; left:80%; width:2px; background:var(--navy); opacity:.4;}
+  .sprs-status{margin-top:9px; font-family:var(--mono); font-size:12.5px; font-weight:600;}
+  .sprs-status.ok{color:var(--green);} .sprs-status.warn{color:var(--amber);} .sprs-status.bad{color:var(--red);}
+  .sprs-note{grid-column:1/-1; font-size:12.5px; color:var(--slate); border-top:1px solid var(--line); padding-top:9px; margin-top:2px;}
+  @media(reduced-motion){.sprs-bar{transition:none;}}
+  @media(max-width:520px){.sprs{grid-template-columns:1fr;} .sprs-num{font-size:34px;}}
 </style>
 
 <div class="wrap">
@@ -248,8 +264,19 @@
     <div class="ctx">
       <div><div class="k">Organization</div><div class="v">Northwind Defense Systems</div></div>
       <div><div class="k">Control</div><div class="v fam" id="ctx-fam">&mdash;</div></div>
-      <div><div class="k">Property class</div><div class="v kind" id="ctx-kind">&mdash;</div></div>
-      <div><div class="k">Subjects checked</div><div class="v" id="ctx-count">&mdash;</div></div>
+      <div><div class="k">DoD weight</div><div class="v" id="ctx-pts">&mdash;</div></div>
+      <div><div class="k">If unmet</div><div class="v" id="ctx-poam">&mdash;</div></div>
+      <div><div class="k">Subjects</div><div class="v" id="ctx-count">&mdash;</div></div>
+    </div>
+
+    <div class="sprs">
+      <div class="sprs-num"><span id="sprs-score">90</span><small>/110</small></div>
+      <div class="sprs-mid">
+        <div class="sprs-top">Live SPRS score <span class="sprs-sub">&mdash; DoD Assessment Methodology weights</span></div>
+        <div class="sprs-track"><div class="sprs-bar" id="sprs-bar"></div><div class="sprs-mark" title="88 = POA&amp;M threshold"></div></div>
+        <div class="sprs-status bad" id="sprs-status">&mdash;</div>
+      </div>
+      <div class="sprs-note">Flip any remediation and the real score moves. A score of 88 or higher still can&rsquo;t be certified if an open gap is worth more than 1 point &mdash; only 1-point items can go on a POA&amp;M.</div>
     </div>
 
     <div class="pipe">
@@ -330,9 +357,6 @@
       </div>
     </div>
 
-    <div class="swap">
-      <b>Deadline and event-history checks are where this earns its keep.</b> A screenshot shows a control existed at one moment; this reads your actual <b>event history</b> &mdash; the HR feed against the access log &mdash; so it catches access revoked late, or never, including violations already patched over that a point-in-time scan can&rsquo;t see. Same engine, any control, any framework you write.
-    </div>
 
     <footer>
       <span class="mark">Machine-checked control validation &middot; every verdict re-runs from an executable check you can falsify</span>
@@ -1917,10 +1941,47 @@ window.CONTROLS["separation-of-duties"] = {
     "session-lock":"https://csf.tools/reference/nist-sp-800-171/r2/3-1/3-1-10/",
     "separation-of-duties":"https://csf.tools/reference/nist-sp-800-171/r2/3-1/3-1-4/"
   };
+  // Verified DoD SPRS weights (Assessment Methodology v1.2.1) + POA&M eligibility (32 CFR 170.21)
+  var META = {
+    "deprovision-cui":       {id:"PS.L2-3.9.2",  pts:5, poam:false, obj:"[a],[b],[c]"},
+    "audit-review-cadence":  {id:"AU.L2-3.3.1",  pts:5, poam:false, obj:"[a]-[f]"},
+    "least-privilege-admin": {id:"AC.L2-3.1.5",  pts:3, poam:false, obj:"[a]-[d]"},
+    "mfa-on-cui":            {id:"IA.L2-3.5.3",  pts:5, poam:false, obj:"[a]-[d]"},
+    "separation-of-duties":  {id:"AC.L2-3.1.4",  pts:1, poam:true,  obj:"[a],[b],[c]"},
+    "session-lock":          {id:"AC.L2-3.1.10", pts:1, poam:true,  obj:"[a],[b],[c]"}
+  };
   var KW = {"for":1,"every":1,"FORALL":1,"EXISTS":1,"not":1,"NOT":1};
   var OP = {"=>":1,"->":1,"==>":1,"IMPLIES":1,"AND":1,"OR":1,"in":1,"!=":1,">=":1,"<=":1,"IF":1,"THEN":1};
 
-  var state = {id:ORDER[0], fixed:false};
+  var state = {id:ORDER[0], fixed:false, fixedSet:{}};
+
+  function controlFails(id){
+    var c=C[id]; if(!c||!c.toggles) return false;
+    var scn = state.fixedSet[id] ? c.toggles[0].apply(JSON.parse(JSON.stringify(c.scenario))) : c.scenario;
+    return c.check(scn).verdict==="FAIL";
+  }
+  function updateScore(){
+    var lost=0, open=[], blockers=[];
+    ORDER.forEach(function(id){
+      if(!C[id]||!META[id]) return;
+      if(controlFails(id)){ lost+=META[id].pts; open.push(id); if(META[id].pts>1) blockers.push(id); }
+    });
+    var score=110-lost;
+    var el=document.getElementById("sprs-score"); if(el){ el.textContent=score; }
+    var bar=document.getElementById("sprs-bar"); if(bar){ bar.style.width=Math.max(0,Math.min(100,score/110*100))+"%"; }
+    var st=document.getElementById("sprs-status");
+    if(st){
+      if(open.length===0){ st.className="sprs-status ok"; st.innerHTML="&#10003; All six requirements met &middot; score 110 / 110"; }
+      else if(score>=88 && blockers.length===0){ st.className="sprs-status warn"; st.innerHTML="Conditional &mdash; POA&amp;M-eligible (180-day closeout clock)"; }
+      else {
+        st.className="sprs-status bad";
+        var bl=blockers.map(function(id){return META[id].id+" ("+META[id].pts+"pt)";}).join(", ");
+        st.innerHTML = score<88
+          ? "Cannot certify &mdash; score below the 88 / 110 threshold"
+          : "Cannot certify &mdash; even at "+score+"/110, "+bl+" exceed 1 point and can&rsquo;t go on a POA&amp;M";
+      }
+    }
+  }
 
   function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
   function colorize(t){return esc(t).split(/(\s+)/).map(function(tok){
@@ -1940,7 +2001,7 @@ window.CONTROLS["separation-of-duties"] = {
       ids.forEach(function(id){ if(!C[id]) return;
         var b=document.createElement("button"); b.className="chip"+(id===state.id?" active":"");
         b.innerHTML='<span class="fam">'+esc(C[id].family)+'</span><span class="ttl">'+esc(CHIP[id]||C[id].title)+'</span>';
-        b.onclick=function(){ state.id=id; state.fixed=false; runTrace(); };
+        b.onclick=function(){ state.id=id; state.fixed=!!state.fixedSet[id]; runTrace(); };
         chips.appendChild(b);
       });
       box.appendChild(chips); host.appendChild(box);
@@ -1953,7 +2014,10 @@ window.CONTROLS["separation-of-duties"] = {
     buildPicker();
     document.getElementById("ctx-fam").innerHTML='<a class="control-id lnk" href="'+(SOURCE[state.id]||"#")+'" target="_blank" rel="noopener">'+esc(ctl.family)+'</a>';
     document.getElementById("ctx-count").textContent=String(subjects.length);
-    var ck=document.getElementById("ctx-kind"); ck.textContent=(kind==="temporal"?"over-time":"point-in-time"); ck.className="v kind "+kind;
+    var m=META[state.id]||{pts:"?",poam:false};
+    var cp=document.getElementById("ctx-pts"); if(cp){ cp.textContent=m.pts+(m.pts===1?" pt":" pts"); }
+    var cpo=document.getElementById("ctx-poam"); if(cpo){ cpo.innerHTML = m.poam ? '<span style="color:var(--amber);font-weight:600">POA&amp;M-eligible</span>' : '<span style="color:var(--red);font-weight:600">cert blocker</span>'; }
+    var ck=document.getElementById("ctx-kind"); if(ck){ ck.textContent=(kind==="temporal"?"over-time":"point-in-time"); ck.className="v kind "+kind; }
 
     var src=SOURCE[state.id]||"#";
     document.getElementById("s-plain").innerHTML='<a class="control-id lnk" href="'+src+'" target="_blank" rel="noopener">'+esc(ctl.family)+' &#8599;</a> &mdash; '+esc(ctl.plainEnglish).replace(/CUI/g,'<span class="cui">CUI</span>');
@@ -2035,9 +2099,10 @@ window.CONTROLS["separation-of-duties"] = {
       traceTimer=setTimeout(step, 190);
     })();
   }
-  document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; render(); });
+  document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; state.fixedSet[state.id]=e.target.checked; render(); updateScore(); });
   var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", runTrace); }
   var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(){ var lg=document.getElementById("legend"); if(lg){lg.style.display="none";} }; }
   runTrace();
+  updateScore();
 })();
 </script>

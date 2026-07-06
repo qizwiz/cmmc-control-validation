@@ -1,14 +1,14 @@
 <title>Elevate your CMMC  -  continuous control validation</title>
 <style>
   :root{
-    /* Gigit brand kit (from their live Elementor theme) */
-    --sky:#6EC1E4; --sky-deep:#2C86BF; --navy:#000F3F; --ink:#0d1b3e;
-    --slate:#54595F; --gray:#7A7A7A; --faint:#9aa3ad;
-    --green:#3DAE52; --green-tint:#eaf7ee; --green-line:#bfe6c9;
-    --red:#E0454A; --red-tint:#fdecec; --red-line:#f2c2c3;
-    --amber:#B9772A; --amber-tint:#fbf1e1;
-    --ground:#F3F7FB; --card:#ffffff; --line:#e4eaf1; --line2:#d3ddea;
-    --sky-tint:#eaf6fc;
+    /* Gigit brand kit -- dimmed dark theme (navy-grounded, sky accent kept) */
+    --sky:#6EC1E4; --sky-deep:#83ccef; --navy:#e9eefb; --ink:#f3f6fd;
+    --slate:#b1bcd9; --gray:#8a97b6; --faint:#74829f;
+    --green:#57c67d; --green-tint:#12311e; --green-line:#265237;
+    --red:#ef7078; --red-tint:#331519; --red-line:#59292f;
+    --amber:#dba756; --amber-tint:#33270f;
+    --ground:#0d1530; --card:#17213f; --line:#28345c; --line2:#35446f;
+    --sky-tint:#182741;
     --slab:"Roboto Slab", Georgia, "Times New Roman", serif;
     --sans:"Roboto", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
@@ -16,7 +16,7 @@
   *{box-sizing:border-box}
   .wrap{
     background:
-      radial-gradient(140% 90% at 50% -20%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      radial-gradient(140% 90% at 50% -20%, rgba(110,193,228,.10) 0%, rgba(110,193,228,0) 60%),
       var(--ground);
     color:var(--slate); font-family:var(--sans); line-height:1.5;
     -webkit-font-smoothing:antialiased;
@@ -26,7 +26,8 @@
 
   /* brand bar */
   .brandbar{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:30px;}
-  .wordmark{display:flex; align-items:baseline; gap:2px; font-family:var(--slab); font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em;}
+  .wordmark{display:inline-flex; align-items:baseline; gap:2px; font-family:var(--slab); font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em; text-decoration:none;}
+  a.wordmark:hover .sub{color:var(--sky-deep);}
   .wordmark .dot{color:var(--sky-deep);}
   .wordmark .sub{font-family:var(--sans); font-weight:600; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); margin-left:8px; align-self:center;}
   .protochip{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--sky-deep); background:var(--sky-tint); border:1px solid var(--sky); border-radius:20px; padding:5px 11px;}
@@ -53,7 +54,7 @@
     display:flex; flex-direction:column; gap:2px;}
   .chip .fam{font-family:var(--mono); font-size:11.5px; color:var(--sky-deep);}
   .chip .ttl{font-size:13px; color:var(--slate);}
-  .chip:hover{border-color:var(--sky); background:#fff;}
+  .chip:hover{border-color:var(--sky); background:var(--sky-tint);}
   .chip:focus-visible{outline:2px solid var(--sky-deep); outline-offset:2px;}
   .chip.active{background:var(--sky-tint); border-color:var(--sky-deep); box-shadow:0 0 0 1px var(--sky-deep);}
   .chip.active .ttl{color:var(--navy); font-weight:600;}
@@ -88,18 +89,18 @@
   .control-id{font-family:var(--mono); color:var(--sky-deep); font-size:13px;}
   .cui{color:var(--amber); font-weight:600;}
   .kindnote{margin-top:10px; font-size:13px; padding:10px 12px; border-radius:8px;}
-  .kindnote.temporal{background:var(--sky-tint); color:#1c5675; border:1px solid var(--sky);}
+  .kindnote.temporal{background:var(--sky-tint); color:var(--sky-deep); border:1px solid var(--sky);}
   .kindnote.point{background:var(--ground); color:var(--gray); border:1px solid var(--line);}
   .kindnote b{font-weight:600;}
 
-  pre.prop{margin:0; font-family:var(--mono); font-size:13px; line-height:1.75; color:#123; white-space:pre-wrap; overflow-x:auto;}
+  pre.prop{margin:0; font-family:var(--mono); font-size:13px; line-height:1.75; color:var(--ink); white-space:pre-wrap; overflow-x:auto;}
   pre.prop .kw{color:var(--sky-deep); font-weight:600;} pre.prop .op{color:var(--amber);}
 
   /* remediation switch */
   .toggle-card{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
   .switch{position:relative; flex:0 0 auto; width:52px; height:30px;}
   .switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; z-index:2;}
-  .track{position:absolute; inset:0; border-radius:30px; background:#f2d6d7; border:1px solid var(--red-line); transition:background .2s, border-color .2s;}
+  .track{position:absolute; inset:0; border-radius:30px; background:var(--red-tint); border:1px solid var(--red-line); transition:background .2s, border-color .2s;}
   .knob{position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:var(--red); transition:transform .22s cubic-bezier(.3,.8,.3,1), background .2s;}
   .switch input:checked ~ .track{background:var(--green-tint); border-color:var(--green-line);}
   .switch input:checked ~ .track .knob{transform:translateX(22px); background:var(--green);}
@@ -125,18 +126,18 @@
   .verdict p{margin:12px 0 0; font-size:15px; max-width:60ch; color:var(--ink);}
 
   .rec{font-family:var(--mono); font-size:13px; border:1px solid var(--line2); border-radius:10px; overflow:hidden; background:var(--card);}
-  .rec .rechead{background:#f6f9fc; padding:9px 14px; color:var(--faint); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; border-bottom:1px solid var(--line);}
+  .rec .rechead{background:var(--sky-tint); padding:9px 14px; color:var(--faint); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; border-bottom:1px solid var(--line);}
   .rec .row{display:grid; grid-template-columns:210px 1fr; border-bottom:1px solid var(--line);}
   .rec .row:last-child{border-bottom:none;}
   .rec .rk{padding:9px 14px; color:var(--gray); border-right:1px solid var(--line);}
   .rec .rv{padding:9px 14px; color:var(--ink); font-variant-numeric:tabular-nums; word-break:break-word;}
   .rec .rv.hot{color:var(--red); font-weight:600;}
   @media(max-width:520px){.rec .row{grid-template-columns:130px 1fr;}}
-  .pass-rec{font-family:var(--mono); font-size:13.5px; color:#1c7a3a; border:1px solid var(--green-line); border-radius:10px; padding:14px 16px; background:var(--green-tint);}
+  .pass-rec{font-family:var(--mono); font-size:13.5px; color:var(--green); border:1px solid var(--green-line); border-radius:10px; padding:14px 16px; background:var(--green-tint);}
   .prov{font-size:12px; color:var(--gray); margin-top:9px; font-style:italic;}
 
   .disc{width:100%; border-collapse:collapse; font-size:13.5px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
-  .disc th{text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:500; padding:9px 14px; border-bottom:1px solid var(--line2); background:#f6f9fc;}
+  .disc th{text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:500; padding:9px 14px; border-bottom:1px solid var(--line2); background:var(--sky-tint);}
   .disc td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
   .disc tr:last-child td{border-bottom:none;}
   .disc .name{color:var(--navy);}
@@ -245,7 +246,7 @@
   <div class="col">
 
     <div class="brandbar">
-      <div class="wordmark">gigit<span class="dot">.</span><span class="sub">security</span></div>
+      <a class="wordmark" href="https://gigitsecurity.com" target="_blank" rel="noopener" title="gigitsecurity.com">gigit<span class="dot">.</span><span class="sub">security</span></a>
       <div class="protochip">Prototype &middot; not an official assessment</div>
     </div>
 

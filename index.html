@@ -232,6 +232,15 @@
   .sprs-note{grid-column:1/-1; font-size:12.5px; color:var(--slate); border-top:1px solid var(--line); padding-top:9px; margin-top:2px;}
   @media(reduced-motion){.sprs-bar{transition:none;}}
   @media(max-width:520px){.sprs{grid-template-columns:1fr;} .sprs-num{font-size:34px;}}
+
+  .stickybar{position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin:0 0 6px; padding:8px 15px; background:rgba(13,21,48,.90); -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+    border:1px solid var(--line); border-top:none; border-radius:0 0 11px 11px; font-family:var(--mono); font-size:12px;}
+  .stickybar .sb-ctl{color:var(--sky-deep);}
+  .stickybar .sb-verdict{font-weight:700; margin-left:9px;}
+  .stickybar .sb-verdict.fail{color:var(--red);} .stickybar .sb-verdict.pass{color:var(--green);}
+  .stickybar .sb-right{color:var(--faint); white-space:nowrap;}
+  .stickybar .sb-right b{color:var(--navy); font-size:15px; font-variant-numeric:tabular-nums; margin:0 2px;}
 </style>
 
 <div class="wrap">
@@ -253,6 +262,11 @@
       <div class="protochip">Prototype &middot; not an official assessment</div>
     </div>
 
+    <div class="stickybar" id="stickybar">
+      <div class="sb-left"><span class="sb-ctl" id="sb-ctl">&mdash;</span><span class="sb-verdict" id="sb-verdict">&mdash;</span></div>
+      <div class="sb-right">Live SPRS <b id="sb-score">90</b><span>/110</span></div>
+    </div>
+
     <div class="eyebrow">Elevate your CMMC</div>
     <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
     <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; each one an <b>executable rule an assessor can read, re-run, and try to break</b>, that hands back the exact violating record when it fails. The ones that matter most read your event history, not just a config snapshot. Pick a control and watch it evaluate, with the record behind every verdict.</p>
@@ -262,7 +276,7 @@
       <span class="arr">&rarr;</span>
       <span class="step"><b>2</b> Watch it check the evidence and catch the violation</span>
       <span class="arr">&rarr;</span>
-      <span class="step"><b>3</b> Flip <em>Remediation</em> &mdash; the verdict turns to PASS</span>
+      <span class="step"><b>3</b> Flip the <em>what-if fix</em> &mdash; watch the verdict and score move</span>
     </div>
     <details class="presenter">
       <summary>&#9656;&nbsp;Showing this to someone? A 20-second script</summary>
@@ -302,7 +316,7 @@
 
       <div class="stage">
         <div class="node">2</div>
-        <div class="slabel">The property the machine checks &mdash; validated, not free-authored</div>
+        <div class="slabel">The exact rule the machine runs against your evidence</div>
         <div class="card">
           <pre class="prop" id="s-prop"></pre>
           <div class="caveat">Thresholds shown (24h, 7 days, 15 min&hellip;) are <b>your SSP-defined parameters</b> &mdash; the checker validates the parameter you set, not a number it invented.</div>
@@ -311,7 +325,7 @@
 
       <div class="stage">
         <div class="node">3</div>
-        <div class="slabel">Remediation &mdash; you drive this</div>
+        <div class="slabel">What-if: simulate the fix</div>
         <div class="card toggle-card">
           <label class="switch">
             <input type="checkbox" id="fix-toggle" aria-label="Apply remediation">
@@ -1978,6 +1992,7 @@ window.CONTROLS["separation-of-duties"] = {
     });
     var score=110-lost;
     var el=document.getElementById("sprs-score"); if(el){ el.textContent=score; }
+    var sbs=document.getElementById("sb-score"); if(sbs){ sbs.textContent=score; }
     var bar=document.getElementById("sprs-bar"); if(bar){ bar.style.width=Math.max(0,Math.min(100,score/110*100))+"%"; }
     var st=document.getElementById("sprs-status");
     if(st){
@@ -2045,6 +2060,8 @@ window.CONTROLS["separation-of-duties"] = {
     var res=ctl.check(scn);
     var t1=(window.performance&&performance.now)?performance.now():0;
     var ms=t1-t0, msTxt=ms>=1?ms.toFixed(1)+" ms":"<1 ms";
+    var sbc=document.getElementById("sb-ctl"); if(sbc){ sbc.textContent=(m.id||ctl.family); }
+    var sbv=document.getElementById("sb-verdict"); if(sbv){ sbv.textContent=res.verdict; sbv.className="sb-verdict "+(res.verdict==="FAIL"?"fail":res.verdict==="PASS"?"pass":""); }
     document.getElementById("s-run").innerHTML='<span class="dot"></span> evaluated <b>'+subjects.length+'</b> subjects &middot; <b>'+res.findings.length+'</b> finding'+(res.findings.length===1?"":"s")+' &middot; resolved in <b>'+msTxt+'</b>';
 
     var fail=res.verdict==="FAIL";
@@ -2067,7 +2084,7 @@ window.CONTROLS["separation-of-duties"] = {
       var f=res.findings[0], rows="";
       for(var k in f.fields){ if(!f.fields.hasOwnProperty(k))continue;
         rows+='<div class="row"><div class="rk">'+esc(k)+'</div><div class="rv'+(hot(f.fields[k])?" hot":"")+'">'+esc(f.fields[k])+'</div></div>';}
-      ehost.innerHTML='<div class="rec"><div class="rechead">Counterexample &middot; finding '+esc(ctl.family)+' / 001</div>'+rows+'</div>';
+      ehost.innerHTML='<div class="rec"><div class="rechead" title="assessors call this a counterexample">The violating record &middot; finding '+esc(ctl.family)+' / 001</div>'+rows+'</div>';
     } else {
       ehost.innerHTML='<div class="pass-rec">&check; the verifier searched all '+subjects.length+' subjects in the evidence and found no record that violates the property.</div>';
     }

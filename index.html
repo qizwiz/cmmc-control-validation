@@ -243,6 +243,28 @@
   .stickybar .sb-verdict.fail{color:var(--red);} .stickybar .sb-verdict.pass{color:var(--green);}
   .stickybar .sb-right{color:var(--faint); white-space:nowrap;}
   .stickybar .sb-right b{color:var(--navy); font-size:15px; font-variant-numeric:tabular-nums; margin:0 2px;}
+  .extract{margin:26px 0 8px; padding:18px 20px; border:1px solid var(--sky); border-radius:14px;
+    background:linear-gradient(180deg, var(--sky-tint), var(--card)); box-shadow:0 8px 24px rgba(0,15,63,.10);}
+  .ex-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .ex-eyebrow{font-family:var(--slab); font-weight:700; font-size:16px; color:var(--navy);}
+  #ex-pick{font-family:var(--sans); font-size:13px; color:var(--navy); background:var(--card); border:1px solid var(--line2); border-radius:8px; padding:7px 10px; max-width:100%;}
+  .ex-flow{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+  @media(max-width:820px){.ex-flow{grid-template-columns:1fr;}}
+  .ex-panel{border:1px solid var(--line); border-radius:11px; padding:13px 14px; background:var(--card); transition:opacity .3s ease, border-color .3s; display:flex; flex-direction:column; gap:9px; min-width:0;}
+  .ex-panel.ex-dim{opacity:.38;}
+  .ex-panel.ex-live{border-color:var(--sky);}
+  .ex-lab{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);}
+  .ex-n{display:inline-grid; place-items:center; width:17px; height:17px; border-radius:50%; background:var(--sky-deep); color:var(--ground); font-weight:700; margin-right:5px;}
+  .ex-cite{font-family:var(--mono); color:var(--sky-deep); text-transform:none; letter-spacing:0;}
+  .ex-hint{text-transform:none; letter-spacing:0; color:var(--faint);}
+  .ex-prose{font-size:14px; color:var(--ink); line-height:1.5; font-style:italic;}
+  .ex-prop{margin:0; font-family:var(--mono); font-size:11.5px; line-height:1.6; color:var(--ink); white-space:pre-wrap; overflow-x:auto; min-height:38px; opacity:0; transition:opacity .4s;}
+  .ex-prop.show{opacity:1;} .ex-prop .kw{color:var(--sky-deep); font-weight:600;} .ex-prop .op{color:var(--amber);}
+  .ex-btn{align-self:flex-start; appearance:none; cursor:pointer; font-family:var(--mono); font-size:12px; font-weight:600; color:var(--ground); background:var(--sky-deep); border:none; border-radius:8px; padding:8px 13px; transition:filter .15s;}
+  .ex-btn:hover{filter:brightness(1.08);} .ex-btn:disabled{opacity:.5; cursor:default;}
+  .ex-verdict{font-family:var(--slab); font-weight:700; font-size:22px; color:var(--faint);}
+  .ex-verdict.fail{color:var(--red);} .ex-verdict.pass{color:var(--green);}
+  .ex-detail{font-size:12.5px; color:var(--slate); line-height:1.5;}
 </style>
 
 <div class="wrap">
@@ -284,6 +306,30 @@
       <summary>&#9656;&nbsp;Showing this to someone? A 20-second script</summary>
       <div class="body">&ldquo;Here&rsquo;s the control in plain English, linked to the exact NIST requirement &mdash; click it and read it yourself. It runs against the evidence and catches the real violation, with the offending record as the proof. The threshold is <b>your</b> SSP number, not one we invented. Now watch&rdquo; &mdash; flip Remediation &mdash; &ldquo;the verdict re-derives live to PASS. Nothing here is pre-recorded.&rdquo;</div>
     </details>
+
+    <section class="extract" id="extract">
+      <div class="ex-head">
+        <div class="ex-eyebrow">Turn a written requirement into a running check</div>
+        <select id="ex-pick" aria-label="Choose a requirement"></select>
+      </div>
+      <div class="ex-flow">
+        <div class="ex-panel">
+          <div class="ex-lab"><span class="ex-n">1</span> The requirement &mdash; <a id="ex-cite" class="ex-cite" href="#" target="_blank" rel="noopener"></a></div>
+          <div class="ex-prose" id="ex-prose"></div>
+          <button class="ex-btn" id="ex-draft" type="button">Draft the check &rarr;</button>
+        </div>
+        <div class="ex-panel ex-dim" id="ex-rulewrap">
+          <div class="ex-lab"><span class="ex-n">2</span> The checkable rule <span class="ex-hint">drafted from the sentence &middot; your expert confirms it</span></div>
+          <pre class="ex-prop" id="ex-prop"></pre>
+          <button class="ex-btn" id="ex-run" type="button" hidden>Run it against the evidence &rarr;</button>
+        </div>
+        <div class="ex-panel ex-dim" id="ex-reswrap">
+          <div class="ex-lab"><span class="ex-n">3</span> The result</div>
+          <div class="ex-verdict" id="ex-verdict">&mdash;</div>
+          <div class="ex-detail" id="ex-detail"></div>
+        </div>
+      </div>
+    </section>
 
     <div class="picker" id="picker"></div>
 
@@ -20971,5 +21017,59 @@ window.CONTROLS["separation-of-duties"] = {
   var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(){ var lg=document.getElementById("legend"); if(lg){lg.style.display="none";} }; }
   runTrace();
   updateScore();
+
+  // ---- Extract-and-run hero: a written requirement -> a drafted checkable rule -> it runs ----
+  var REQ_PROSE = {
+    "deprovision-cui": {req:"Ensure that organizational systems containing CUI are protected during and after personnel actions such as terminations and transfers.", cite:"PS.L2-3.9.2"},
+    "audit-review-cadence": {req:"Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, investigation, and reporting of unlawful or unauthorized system activity.", cite:"AU.L2-3.3.1"},
+    "least-privilege-admin": {req:"Employ the principle of least privilege, including for specific security functions and privileged accounts.", cite:"AC.L2-3.1.5"},
+    "mfa-on-cui": {req:"Use multifactor authentication (MFA) for local and network access to privileged accounts and for network access to non-privileged accounts.", cite:"IA.L2-3.5.3"},
+    "separation-of-duties": {req:"Separate the duties of individuals to reduce the risk of malevolent activity without collusion.", cite:"AC.L2-3.1.4"},
+    "session-lock": {req:"Use session lock with pattern-hiding displays to prevent access and viewing of data after a period of inactivity.", cite:"AC.L2-3.1.10"}
+  };
+  (function(){
+    var pick=document.getElementById("ex-pick"); if(!pick) return;
+    var order=(typeof ORDER!=="undefined"?ORDER:Object.keys(C));
+    order.forEach(function(id){ if(C[id]){ var o=document.createElement("option"); o.value=id;
+      o.textContent=(REQ_PROSE[id]?REQ_PROSE[id].cite:id)+"  -  "+String(C[id].title||id).replace(/\s*\(.*$/,"").slice(0,38); pick.appendChild(o); } });
+    var propEl=document.getElementById("ex-prop"), draftBtn=document.getElementById("ex-draft"), runBtn=document.getElementById("ex-run"),
+        rw=document.getElementById("ex-rulewrap"), rsw=document.getElementById("ex-reswrap");
+    function reset(){
+      var id=pick.value, rp=REQ_PROSE[id]||{req:"",cite:id};
+      document.getElementById("ex-prose").textContent='"'+rp.req+'"';
+      var cite=document.getElementById("ex-cite"); cite.textContent=rp.cite; cite.href=(typeof SOURCE!=="undefined"&&SOURCE[id])||"#";
+      propEl.classList.remove("show"); propEl.innerHTML="";
+      runBtn.hidden=true; runBtn.disabled=false; runBtn.textContent="Run it against the evidence ->";
+      rw.classList.add("ex-dim"); rw.classList.remove("ex-live"); rsw.classList.add("ex-dim"); rsw.classList.remove("ex-live");
+      var v=document.getElementById("ex-verdict"); v.textContent="-"; v.className="ex-verdict";
+      document.getElementById("ex-detail").innerHTML="";
+      draftBtn.disabled=false; draftBtn.textContent="Draft the check ->";
+    }
+    draftBtn.addEventListener("click", function(){
+      var c=C[pick.value]; if(!c) return;
+      draftBtn.disabled=true; draftBtn.textContent="reading the requirement...";
+      setTimeout(function(){
+        rw.classList.remove("ex-dim"); rw.classList.add("ex-live");
+        propEl.innerHTML=colorize(c.propertyText||""); propEl.classList.add("show");
+        runBtn.hidden=false; draftBtn.textContent="drafted";
+      }, 650);
+    });
+    runBtn.addEventListener("click", function(){
+      var c=C[pick.value]; if(!c) return;
+      runBtn.disabled=true; runBtn.textContent="running...";
+      var res=c.check(c.scenario), subj=res.subjectsExamined||0, nf=(res.findings||[]).length, f=(res.findings&&res.findings[0])||null;
+      setTimeout(function(){
+        rsw.classList.remove("ex-dim"); rsw.classList.add("ex-live");
+        var v=document.getElementById("ex-verdict"); v.textContent=res.verdict;
+        v.className="ex-verdict "+(res.verdict==="FAIL"?"fail":res.verdict==="PASS"?"pass":"");
+        var det=nf+" finding"+(nf===1?"":"s")+" across "+subj+" subjects; "+(subj-nf)+" cleared.";
+        if(f){ det+=" &mdash; "+(f.who?("<b>"+esc(f.who)+"</b>: "):"")+esc(String(f.detail||"").slice(0,150)); }
+        document.getElementById("ex-detail").innerHTML=det;
+        runBtn.disabled=false; runBtn.textContent="Run it against the evidence ->";
+      }, 500);
+    });
+    pick.addEventListener("change", reset);
+    reset();
+  })();
 })();
 </script>

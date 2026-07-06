@@ -213,7 +213,7 @@
   .legend .ldoc span{display:block; font-size:11px; color:var(--slate); line-height:1.35;}
   .legend .ldoc.cur{border-color:var(--sky-deep); box-shadow:0 0 0 1px var(--sky-deep); background:var(--sky-tint);}
   .legend .ldoc.ssp{cursor:default;} .legend .ldoc.ssp b{color:var(--amber);}
-  @media(max-width:1260px){.legend{display:none;}}
+  @media(max-width:1500px){.legend{display:none;}}
 
   .sprs{display:grid; grid-template-columns:auto 1fr; gap:6px 20px; align-items:center; margin:16px 0 6px; padding:16px 18px;
     background:var(--card); border:1px solid var(--line2); border-radius:14px; box-shadow:0 8px 24px rgba(0,15,63,.07);}
@@ -2108,7 +2108,7 @@ window.CONTROLS["separation-of-duties"] = {
       traceTimer=setTimeout(step, 190);
     })();
   }
-  document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; state.fixedSet[state.id]=e.target.checked; render(); updateScore(); });
+  document.getElementById("fix-toggle").addEventListener("change", function(e){ state.fixed=e.target.checked; state.fixedSet[state.id]=e.target.checked; render(); updateScore(); var tr=document.getElementById("s-trace"); if(tr){ tr.innerHTML='<div class="tline tdone">&#9642; re-evaluated with remediation '+(e.target.checked?"applied":"removed")+' &mdash; press <b>Run the check</b> to watch the scan again</div>'; } });
   var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", runTrace); }
   var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(){ var lg=document.getElementById("legend"); if(lg){lg.style.display="none";} }; }
   runTrace();

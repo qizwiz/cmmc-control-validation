@@ -290,6 +290,8 @@
   .pr-tla{margin:0; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--ink); background:var(--ground); border:1px solid var(--line); border-radius:8px; padding:11px 12px; white-space:pre; overflow-x:auto;}
   .pr-tla .c{color:var(--faint);} .pr-tla .op{color:var(--amber);} .pr-tla .kw{color:var(--green); font-weight:600;}
   .pr-found{font-size:13px; color:var(--slate); margin:6px 0 2px;}
+  .rtoggle{appearance:none; cursor:pointer; font-family:var(--mono); font-size:11.5px; color:var(--sky-deep); background:transparent; border:none; padding:9px 0; text-align:left;}
+  .rtoggle:hover{color:var(--sky);}
 </style>
 
 <div class="wrap">
@@ -21044,13 +21046,30 @@ window.CONTROLS["separation-of-duties"] = {
 
     var whoSet={}; res.findings.forEach(function(f){whoSet[f.who]=f;});
     var tb=document.getElementById("s-roster"); tb.innerHTML="";
-    subjects.forEach(function(sub){
+    var viols=[], clears=[];
+    subjects.forEach(function(sub){ (whoSet[ros.who(sub)]?viols:clears).push(sub); });
+    function rowFor(sub, cls){
       var hit=whoSet[ros.who(sub)], tr=document.createElement("tr");
+      if(cls){ tr.className=cls; }
       var reason=hit?'<div class="rz">'+esc(hit.detail)+'</div>':'';
       tr.innerHTML='<td><span class="name">'+esc(ros.name(sub))+'</span><div class="sub">'+esc(ros.sub(sub))+'</div>'+reason+'</td>'+
         '<td style="text-align:right"><span class="pill '+(hit?"fail":"pass")+'">'+(hit?"VIOLATION":"CLEARED")+'</span></td>';
-      tb.appendChild(tr);
-    });
+      return tr;
+    }
+    viols.forEach(function(sub){ tb.appendChild(rowFor(sub,"")); }); // violations expanded by default
+    if(clears.length){
+      var sumtr=document.createElement("tr");
+      sumtr.innerHTML='<td colspan="2"><button type="button" class="rtoggle" id="rtoggle">&#9656;&nbsp; '+clears.length+' cleared subject'+(clears.length===1?"":"s")+', proven compliant &mdash; show</button></td>';
+      tb.appendChild(sumtr);
+      clears.forEach(function(sub){ var r=rowFor(sub,"cleared-row"); r.style.display="none"; tb.appendChild(r); }); // cleared collapsed by default
+      var btn=document.getElementById("rtoggle"), shown=false;
+      btn.addEventListener("click", function(){
+        shown=!shown;
+        var rows=tb.querySelectorAll("tr.cleared-row");
+        for(var i=0;i<rows.length;i++){ rows[i].style.display=shown?"":"none"; }
+        btn.innerHTML=(shown?"&#9662;":"&#9656;")+"&nbsp; "+clears.length+" cleared subject"+(clears.length===1?"":"s")+", proven compliant &mdash; "+(shown?"hide":"show");
+      });
+    }
     var viol=nViol, cleared=nClr;
     document.getElementById("s-rosternote").innerHTML=fail
       ? '<b>'+viol+'</b> finding'+(viol===1?"":"s")+' across <b>'+denom+'</b> subjects; <b>'+cleared+'</b> cleared. It did not flag every subject &mdash; each of the '+cleared+' <b style="color:var(--green)">cleared</b> was proven compliant one at a time, and '+viol+' failed with the record above. Not pattern-matching; proving the control per subject.'

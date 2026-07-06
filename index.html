@@ -1353,15 +1353,78 @@ window.CONTROLS["deprovision-cui"] = {
       apply: function (scn) {
         // Work on a deep copy so the original scenario object is never mutated.
         var fixed = JSON.parse(JSON.stringify(scn));
-        var revoke = { "u-bob": "2026-06-10T21:00:00", "u-frank": "2026-06-05T20:30:00" };
+
+        // Dynamically re-derive the violating grants EXACTLY the way check()
+        // decides a violation, then revoke each one within the SSP window. No
+        // hard-coded culprit: whatever subject/system the (randomized) fixture
+        // flags this load is the subject we remediate.
+        var policy = fixed.policy || {};
+        var windowHours = policy.deprovisionWindowHours;
+        // If the window itself is unusable, check() fails closed on the policy
+        // block and no per-grant revocation can restore the verdict -- nothing to
+        // remediate at the grant level.
+        if (typeof windowHours !== "number" || !isFinite(windowHours) || windowHours <= 0) {
+          return fixed;
+        }
+        var GRACE_MS = windowHours * 60 * 60 * 1000;
+
+        // Same CUI-system index check() builds.
+        var systemsById = {};
+        for (var s = 0; s < fixed.systems.length; s++) {
+          systemsById[fixed.systems[s].id] = fixed.systems[s];
+        }
+
+        // Format a millisecond instant as the local "YYYY-MM-DDTHH:MM:SS" string
+        // check() parses with Date.parse (parsed as local time -> exact round-trip
+        // to the second). Revoking AT the personnel-action instant is strictly
+        // inside the window (deadline = action + W, W > 0) and always parseable.
+        var fmtLocal = function (ms) {
+          var d = new Date(ms);
+          var p = function (n) { return (n < 10 ? "0" : "") + n; };
+          return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+            "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+        };
+
+        var KNOWN_STATUS = { active: 1, terminated: 1, transferred: 1 };
+
         for (var i = 0; i < fixed.users.length; i++) {
           var u = fixed.users[i];
-          var when = revoke[u.id];
-          if (!when) continue;
+          var status = (typeof u.status === "string") ? u.status.trim().toLowerCase() : "";
+          // Unknown status / missing action date are data-quality findings that
+          // revocation cannot fix; check()'s grant-loop is never reached for them.
+          if (!KNOWN_STATUS[status]) continue;
+          var isTerminated = (status === "terminated");
+          var isTransferred = (status === "transferred");
+          if (!isTerminated && !isTransferred) continue; // active -- nothing to deprovision
+
+          var actionRaw = isTerminated ? u.terminatedAt : u.transferredAt;
+          var actionPresent = !(actionRaw === null || actionRaw === undefined || actionRaw === "");
+          var actionMs = actionPresent ? Date.parse(actionRaw) : NaN;
+          if (!(actionPresent && isFinite(actionMs))) continue; // data-quality, not revocable
+
+          var deadlineMs = actionMs + GRACE_MS;
+          var revokeStr = fmtLocal(actionMs); // offboarding / role-change script ran at action time
+
           for (var j = 0; j < u.access.length; j++) {
-            if (u.access[j].systemId === "cad-vault" && u.access[j].revokedAt === null) {
-              u.access[j].revokedAt = when; // offboarding / role-change script ran same evening
+            var g = u.access[j];
+            var sys = systemsById[g.systemId];
+            if (!sys) continue;        // unknown system: data-quality, not revocable
+            if (!sys.cui) continue;    // property only quantifies over CUI systems
+            // transfer: only prior-role access flagged revokeOnTransfer is in scope.
+            if (isTransferred && g.revokeOnTransfer !== true) continue;
+
+            // Would check() flag THIS grant? Three ways: still-active-past-deadline,
+            // unparseable revokedAt, or revoked-late. Revoke within the window for
+            // each. (Revoking a not-yet-late grant is a harmless no-op: revMs =
+            // actionMs <= deadline, so it stays PASS.)
+            var flagged;
+            if (g.revokedAt === null || g.revokedAt === undefined) {
+              flagged = true;
+            } else {
+              var revMs = Date.parse(g.revokedAt);
+              flagged = (!isFinite(revMs) || revMs > deadlineMs);
             }
+            if (flagged) g.revokedAt = revokeStr;
           }
         }
         return fixed;
@@ -1687,11 +1750,67 @@ window.CONTROLS = window.CONTROLS || {};
       {
         label: "SOC backfills the missed CAD-vault review that closes the gap",
         apply: function (scn) {
+          // Deep-copy first so the base scenario is never mutated.
           var fixed = JSON.parse(JSON.stringify(scn));
+
+          var MS_PER_DAY = 24 * 60 * 60 * 1000;
+          var policy = fixed.policy || {};
+          var cadenceDays = typeof policy.logReviewCadenceDays === "number" ? policy.logReviewCadenceDays : NaN;
+          var windowStartMs = Date.parse(policy.windowStart);
+          var asOfMs = Date.parse(fixed.asOf);
+
+          // If the cadence/window parameters are themselves missing/unparseable, check()
+          // fails closed on a SCENARIO-level finding that no per-subject backfill can
+          // address. Nothing to remediate here -- return the clean copy unchanged.
+          if (!isFinite(cadenceDays) || cadenceDays <= 0 || !isFinite(windowStartMs) || !isFinite(asOfMs)) {
+            return fixed;
+          }
+          var cadenceMs = cadenceDays * MS_PER_DAY;
+
+          // Build ONE within-cadence review schedule spanning [windowStart, asOf]: a review
+          // at the window start, then one every cadence, so every boundary gap the check
+          // walks (windowStart->first, each consecutive pair, last->asOf) is <= cadence.
+          // This is the generalized "backfill the missed mid-window reviews" remediation --
+          // it closes the gap for ANY lapsed subject, not one hardcoded system.
+          function pad2(n) { return (n < 10 ? "0" : "") + n; }
+          function iso(ms) {
+            var d = new Date(ms);
+            return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + "T" +
+              pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+          }
+          var schedule = [];
+          for (var t = windowStartMs; t < asOfMs; t += cadenceMs) schedule.push(iso(t));
+          if (schedule.length === 0) schedule.push(iso(windowStartMs)); // degenerate window guard
+
+          // Re-derive the violating subjects EXACTLY the way check() decides a violation:
+          // for each CUI system, walk the in-window review times and find the worst
+          // boundary gap; if it exceeds the cadence (or a timestamp is unparseable ->
+          // check fails closed), backfill that subject with the within-cadence schedule.
           for (var i = 0; i < fixed.systems.length; i++) {
-            if (fixed.systems[i].id === "cad-vault") {
-              // The mid-window review that should have happened, restoring the cadence.
-              fixed.systems[i].reviewLog = ["2026-06-19T09:00:00", "2026-06-26T09:00:00", "2026-07-03T09:00:00"];
+            var sys = fixed.systems[i];
+            if (!sys.handlesCUI) continue; // check() quantifies over CUI systems only
+
+            var raw = sys.reviewLog || [];
+            var times = [], bad = false;
+            for (var r = 0; r < raw.length; r++) {
+              var tm = Date.parse(raw[r]);
+              if (!isFinite(tm)) { bad = true; break; }
+              if (tm >= windowStartMs && tm <= asOfMs) times.push(tm);
+            }
+            times.sort(function (a, b) { return a - b; });
+
+            var worst = -1, prev = windowStartMs;
+            for (var k = 0; k < times.length; k++) {
+              var g = times[k] - prev;
+              if (g > worst) worst = g;
+              prev = times[k];
+            }
+            var gLast = asOfMs - prev;
+            if (gLast > worst) worst = gLast;
+
+            if (bad || worst > cadenceMs) {
+              // Backfill this lapsed subject's review history to close every gap.
+              sys.reviewLog = schedule.slice();
             }
           }
           return fixed;
@@ -1976,19 +2095,58 @@ window.CONTROLS = window.CONTROLS || {};
 
     toggles: [
       {
-        label: "Revoke Dana's leftover CAD Vault admin (downgrade to standard user)",
+        label: "Downgrade every unauthorized admin grant to standard user (least-privilege review)",
         apply: function (scn) {
           // Work on a deep copy so the original scenario is never mutated.
           var fixed = JSON.parse(JSON.stringify(scn));
+
+          // Re-derive the violating (user, grant) pairs EXACTLY the way check()
+          // decides a finding, then remediate each flagged grant by downgrading
+          // its elevated privilege to a benign (role-neutral) value -- the
+          // least-privilege remediation for this control. This is DYNAMIC: it
+          // fixes whichever subjects/systems the check flags in THIS scenario,
+          // not a hardcoded culprit.
+          var asOfMs = Date.parse(fixed.asOf);
+
+          var benignRaw = (fixed.policy && fixed.policy.benignPrivileges) || ["user"];
+          var benign = [];
+          for (var b = 0; b < benignRaw.length; b++) {
+            benign.push(String(benignRaw[b]).trim().toLowerCase());
+          }
+          // The value we downgrade to: a raw benign privilege (its normalized
+          // form is in the benign set by construction, so check() clears it).
+          var benignValue = benignRaw.length ? benignRaw[0] : "user";
+
+          function isElevated(priv) {
+            return benign.indexOf(String(priv).trim().toLowerCase()) === -1;
+          }
+
+          function activeWaiver(userId, sysId) {
+            var ws = fixed.waivers || [];
+            for (var w = 0; w < ws.length; w++) {
+              if (ws[w].userId === userId &&
+                  ws[w].system === sysId &&
+                  typeof ws[w].approvedBy === "string" &&
+                  ws[w].approvedBy.trim() !== "" &&
+                  Date.parse(ws[w].expires) >= asOfMs) {
+                return ws[w];
+              }
+            }
+            return null;
+          }
+
           for (var i = 0; i < fixed.users.length; i++) {
             var u = fixed.users[i];
-            if (u.id !== "dreyes") continue;
+            var authorized = (fixed.roleAuthorizations && fixed.roleAuthorizations[u.role]) || [];
             for (var j = 0; j < u.grants.length; j++) {
               var g = u.grants[j];
-              if (g.system === "cad-vault" && g.privilege === "admin") {
-                g.privilege = "user";
-                g.grantedVia = "downgraded 2026-07-03: least-privilege review (was " + g.grantedVia + ")";
-              }
+              if (!isElevated(g.privilege)) continue;             // benign: not a finding
+              if (authorized.indexOf(g.system) !== -1) continue;  // role authorizes it
+              if (activeWaiver(u.id, g.system)) continue;         // active approved waiver
+              // Flagged by check(): downgrade to least privilege.
+              g.grantedVia = "downgraded 2026-07-03: least-privilege review (was \"" +
+                             String(g.privilege) + "\" via " + g.grantedVia + ")";
+              g.privilege = benignValue;
             }
           }
           return fixed;
@@ -2240,14 +2398,24 @@ window.CONTROLS["mfa-on-cui"] = (function () {
 
     toggles: [
       {
-        label: "Enroll Bob Reyes in MFA (issue a FIDO2 key for his CAD Vault network logins)",
+        label: "Enroll every MFA-required-but-unenrolled account (issue a second factor for each flagged in-scope access edge)",
         apply: function (scn) {
           var fixed = deepCopy(scn); // never mutate the caller's object
+          // Re-derive the violating edges EXACTLY as check() does: an in-scope
+          // access edge on which the 3.5.3 matrix requires MFA (privileged
+          // account on any vector, OR any account over the network) but that is
+          // not MFA-protected. Enroll a second factor on each such edge so the
+          // control is driven to PASS regardless of which subjects this seed's
+          // sampler happened to flag.
           for (var i = 0; i < fixed.users.length; i++) {
-            if (fixed.users[i].id !== "bob.reyes") continue;
-            for (var j = 0; j < fixed.users[i].access.length; j++) {
-              if (fixed.users[i].access[j].system === "cad-vault") {
-                fixed.users[i].access[j].mfa = true;
+            var user = fixed.users[i];
+            for (var j = 0; j < user.access.length; j++) {
+              var edge = user.access[j];
+              var sys = systemById(fixed, edge.system);
+              if (!sys) continue;            // unknown system: dropped by check() too
+              if (!inScope(sys)) continue;   // out of scope per SSP asset inventory
+              if (mfaRequired(user, edge) && edge.mfa !== true) {
+                edge.mfa = true;             // enroll the missing second factor
               }
             }
           }
@@ -2509,13 +2677,54 @@ window.CONTROLS = window.CONTROLS || {};
         apply: function (scn) {
           // Work on a deep copy so the original scenario object is never mutated.
           var fixed = JSON.parse(JSON.stringify(scn));
+
+          // Re-derive the SSP-defined inactivity period exactly as check() does,
+          // so the timeout remediation is measured against the same threshold the
+          // check enforces (objective [a] parameter).
+          var policy = fixed.policy || {};
+          var period = (typeof policy.sessionLockTimeoutMinutes === "number")
+            ? policy.sessionLockTimeoutMinutes : null;
+
           for (var i = 0; i < fixed.systems.length; i++) {
             var s = fixed.systems[i];
-            if (s.id === "CUI-FILE-SRV") {
-              s.sessionLock.concealsDisplay = true;
-              s.sessionLock.source = "GPO: NW-FileServer-RDP (preview-on-lock disabled per HD-4471 follow-up)";
-              s.lastConfigReview = fixed.asOf;
+
+            // Same scope gate as check(): the property only quantifies over CUI
+            // systems, so only they can produce a finding to remediate.
+            if (!s.cui) continue;
+
+            var lock = s.sessionLock || (s.sessionLock = {});
+            var enabled = lock.enabled === true;
+            var timeout = (typeof lock.timeoutMinutes === "number") ? lock.timeoutMinutes : null;
+            var conceals = lock.concealsDisplay === true;
+
+            // Reproduce check()'s violation decision for THIS system, verbatim:
+            // any of the [b] failures (disabled / no timeout / timeout exceeds the
+            // SSP period) OR the [c] failure (locks but shows a preview).
+            var violates = false;
+            if (!enabled) {
+              violates = true;
+            } else if (timeout === null) {
+              violates = true;
+            } else if (period !== null && timeout > period) {
+              violates = true;
             }
+            if (enabled && !conceals) {
+              violates = true;
+            }
+            if (!violates) continue;
+
+            // Remediate this flagged subject into a compliant session lock:
+            //  [b] enable the lock and bring the inactivity timeout within the
+            //      SSP-defined period; [c] turn on the pattern-hiding display.
+            lock.enabled = true;
+            if (period !== null) {
+              if (timeout === null || timeout > period) lock.timeoutMinutes = period;
+            } else if (timeout === null) {
+              lock.timeoutMinutes = 15;
+            }
+            lock.concealsDisplay = true;
+            lock.source = "GPO: NW-CUI-Workstation-Baseline (session lock remediated per HD-4471 follow-up)";
+            s.lastConfigReview = fixed.asOf;
           }
           return fixed;
         }
@@ -2756,16 +2965,48 @@ window.CONTROLS["separation-of-duties"] = {
 
   toggles: [
     {
-      label: "Revoke Dana's 'approve change' duty on the CAD Vault (route approvals to the Change Board)",
+      label: "Revoke one side of every conflicting-duty pair (route the approve/grant half to a separate individual)",
       apply: function (scn) {
         // Work on a deep copy; never mutate the caller's object.
         var fixed = JSON.parse(JSON.stringify(scn));
-        for (var i = 0; i < fixed.users.length; i++) {
-          var u = fixed.users[i];
-          if (u.id !== "dana.reyes") continue;
-          u.duties = u.duties.filter(function (d) {
-            return !(d.system === "cad-vault" && d.duty === "approve-change");
-          });
+        var systems = fixed.systems || [];
+
+        // Re-derive the violating (user, system, pair) records EXACTLY the way
+        // check() decides a violation -- for each conflicting pair a user holds
+        // in full on a system, revoke the SECOND duty of the pair (the approve/
+        // grant half), routing it to a separate individual. Removing duties is
+        // monotonic: it can only clear violations, never create new ones.
+        for (var ui = 0; ui < fixed.users.length; ui++) {
+          var user = fixed.users[ui];
+
+          for (var si = 0; si < systems.length; si++) {
+            var sys = systems[si];
+            var pairs = sys.conflictingDutyPairs || [];
+
+            // Duties this user currently holds on this system (mirrors check()).
+            var held = {};
+            for (var di = 0; di < user.duties.length; di++) {
+              var d = user.duties[di];
+              if (d.system === sys.id) held[d.duty] = true;
+            }
+
+            // For every fully-held conflicting pair, mark its second duty for
+            // revocation. The pairs on a system have disjoint duty sets, so
+            // revoking each pair's d2 breaks every pair independently.
+            var revoke = {};
+            for (var pi = 0; pi < pairs.length; pi++) {
+              var d1 = pairs[pi][0], d2 = pairs[pi][1];
+              if (held[d1] && held[d2]) revoke[d2] = true;
+            }
+
+            var hasRevoke = false;
+            for (var rk in revoke) { if (revoke[rk]) { hasRevoke = true; break; } }
+            if (!hasRevoke) continue;
+
+            user.duties = user.duties.filter(function (dd) {
+              return !(dd.system === sys.id && revoke[dd.duty]);
+            });
+          }
         }
         return fixed;
       }

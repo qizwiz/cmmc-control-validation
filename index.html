@@ -313,20 +313,29 @@
   .dt-chain .dt-ssp-node{color:var(--amber); font-weight:600; font-size:12.5px;}
   .dt-chain > li > span{display:block; color:var(--faint); font-size:11.5px; margin-top:1px;}
   .dt-chain > li.dt-leaf > span{color:var(--slate);}
+
+  /* ---- app-shell: view router + top nav + workbench grid (additive) ---- */
+  [hidden]{display:none !important;}
+  .appbar{position:sticky; top:0; z-index:60; background:rgba(13,21,48,.92);
+    -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+    border:1px solid var(--line); border-top:none; border-radius:0 0 12px 12px; margin-bottom:14px;}
+  .appbar #stickybar{position:static; background:none; -webkit-backdrop-filter:none; backdrop-filter:none; border:none; border-radius:0; margin:0;}
+  .appnav{display:flex; gap:4px; padding:8px 12px 0; flex-wrap:wrap;}
+  .navtab{font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; text-decoration:none;
+    color:var(--gray); padding:8px 13px; border-radius:9px 9px 0 0; border:1px solid transparent; cursor:pointer;}
+  .navtab:hover{color:var(--navy); background:var(--sky-tint);}
+  .navtab.active{color:var(--navy); background:var(--card); border-color:var(--line); border-bottom-color:transparent;}
+  .stickybar .sb-org{color:var(--slate); margin-right:6px;}
+  .views{display:block;}
+  .workbench{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; margin-top:8px;}
+  .workbench .pipe{margin-top:16px;}
+  @media(max-width:900px){.workbench{grid-template-columns:1fr;}}
+  /* Sources tab: de-fix the legend and beat the 1500px display:none media rule (specificity 0,2,1 > 0,1,0) */
+  section[data-view="sources"] .legend{position:static; display:block; top:auto; right:auto; width:auto; max-width:640px; max-height:none; margin:8px 0; box-shadow:none; z-index:auto;}
+  section[data-view="sources"] #lclose{display:none;}
 </style>
 
 <div class="wrap">
-  <aside class="legend" id="legend" aria-label="Source documents">
-    <div class="lhead"><span>Source documents</span><button class="lclose" id="lclose" type="button" aria-label="Hide" title="Hide">&times;</button></div>
-    <div class="lsub">Every check is drafted from these governance sources &mdash; click any to open the original.</div>
-    <a class="ldoc cur" id="doc-171" href="#" target="_blank" rel="noopener"><b>NIST SP 800-171 Rev 2 &#8599;</b><span id="doc-171-sub">this control&rsquo;s requirement</span></a>
-    <a class="ldoc" href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171A.pdf" target="_blank" rel="noopener"><b>NIST SP 800-171A &#8599;</b><span>the 320 assessment objectives</span></a>
-    <a class="ldoc" href="https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL2v2.pdf" target="_blank" rel="noopener"><b>CMMC L2 Assessment Guide &#8599;</b><span>how an assessor tests each control</span></a>
-    <a class="ldoc" href="https://www.acq.osd.mil/asda/dpc/cp/cyber/docs/safeguarding/NIST-SP-800-171-Assessment-Methodology-Version-1.2.1-6.24.2020.pdf" target="_blank" rel="noopener"><b>DoD Assessment Methodology &#8599;</b><span>the SPRS 1 / 3 / 5 point weights</span></a>
-    <a class="ldoc" href="https://www.ecfr.gov/current/title-32/section-170.21" target="_blank" rel="noopener"><b>32 CFR 170.21 &#8599;</b><span>POA&amp;M eligibility &amp; the 180-day clock</span></a>
-    <div class="ldoc ssp"><b>Northwind SSP</b><span>your own policy parameters (24h, 7d&hellip;) &mdash; not NIST values</span></div>
-    <div class="lnote2">CMMC Level 2 assesses against <b>800-171 Rev 2</b> and its companion <b>800-171A</b> (per 32 CFR 170.17). NIST has since withdrawn <b>both</b> in favor of the Rev 3 editions, but CMMC does not use Rev 3 yet &mdash; so these references are deliberately the Rev 2-era versions.</div>
-  </aside>
   <div class="col">
 
     <div class="brandbar">
@@ -334,15 +343,50 @@
       <div class="protochip">Prototype &middot; not an official assessment</div>
     </div>
 
-    <div class="stickybar" id="stickybar">
-      <div class="sb-left"><span class="sb-ctl" id="sb-ctl">&mdash;</span><span class="sb-verdict" id="sb-verdict">&mdash;</span></div>
-      <div class="sb-right">Live SPRS <b id="sb-score">90</b><span>/110</span></div>
+    <div class="appbar">
+      <nav class="appnav" aria-label="Views">
+        <a class="navtab" data-nav="overview" href="#/overview">Overview</a>
+        <a class="navtab" data-nav="controls" href="#/controls">Controls</a>
+        <a class="navtab" data-nav="extract" href="#/extract">Extract</a>
+        <a class="navtab" data-nav="premium" href="#/premium">Premium</a>
+        <a class="navtab" data-nav="sources" href="#/sources">Sources</a>
+      </nav>
+      <div class="stickybar" id="stickybar">
+        <div class="sb-left"><span class="sb-org">Northwind Defense Systems</span><span class="sb-ctl" id="sb-ctl">&mdash;</span><span class="sb-verdict" id="sb-verdict">&mdash;</span></div>
+        <div class="sb-right">Live SPRS <b id="sb-score">90</b><span>/110</span></div>
+      </div>
     </div>
 
+    <main class="views">
+
+      <section class="view" data-view="overview">
     <div class="eyebrow">Elevate your CMMC</div>
     <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
     <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; each one an <b>executable rule an assessor can read, re-run, and try to break</b>, that hands back the exact violating record when it fails. The ones that matter most read your event history, not just a config snapshot. Pick a control and watch it evaluate, with the record behind every verdict.</p>
 
+    <div class="sprs">
+      <div class="sprs-num"><span id="sprs-score">90</span><small>/110</small></div>
+      <div class="sprs-mid">
+        <div class="sprs-top">Live SPRS score <span class="sprs-sub">&mdash; DoD Assessment Methodology weights</span></div>
+        <div class="sprs-track"><div class="sprs-bar" id="sprs-bar"></div><div class="sprs-mark" title="88 = POA&amp;M threshold"></div></div>
+        <div class="sprs-status bad" id="sprs-status">&mdash;</div>
+      </div>
+      <div class="sprs-note">Flip any remediation and the real score moves. A score of 88 or higher still can&rsquo;t be certified if an open gap is worth more than 1 point &mdash; only 1-point items can go on a POA&amp;M.</div>
+    </div>
+
+    <div class="why">
+      <div class="c old">
+        <h3>A checklist / screenshot audit</h3>
+        <p>Captures one moment in time and marks a box green. Between assessments, drift is invisible &mdash; and a point-in-time snapshot can&rsquo;t tell you whether the control held every day in between.</p>
+      </div>
+      <div class="c new">
+        <h3>This</h3>
+        <p>A formal rule, checked by a verifier that returns the exact violating record as its evidence. Deadline controls read your <b>event history</b> &mdash; the action and its revocation timestamps &mdash; so they catch access revoked late or never, including violations already patched over, which a point-in-time scan misses.</p>
+      </div>
+    </div>
+      </section>
+
+      <section class="view" data-view="controls">
     <div class="howto">
       <span class="step"><b>1</b> Pick a control below</span>
       <span class="arr">&rarr;</span>
@@ -355,30 +399,6 @@
       <div class="body">&ldquo;Here&rsquo;s the control in plain English, linked to the exact NIST requirement &mdash; click it and read it yourself. It runs against the evidence and catches the real violation, with the offending record as the proof. The threshold is <b>your</b> SSP number, not one we invented. Now watch&rdquo; &mdash; flip Remediation &mdash; &ldquo;the verdict re-derives live to PASS. Nothing here is pre-recorded.&rdquo;</div>
     </details>
 
-    <section class="extract" id="extract">
-      <div class="ex-head">
-        <div class="ex-eyebrow">Turn a written requirement into a running check</div>
-        <select id="ex-pick" aria-label="Choose a requirement"></select>
-      </div>
-      <div class="ex-flow">
-        <div class="ex-panel">
-          <div class="ex-lab"><span class="ex-n">1</span> The requirement &mdash; <a id="ex-cite" class="ex-cite" href="#" target="_blank" rel="noopener"></a></div>
-          <div class="ex-prose" id="ex-prose"></div>
-          <button class="ex-btn" id="ex-draft" type="button">Draft the check &rarr;</button>
-        </div>
-        <div class="ex-panel ex-dim" id="ex-rulewrap">
-          <div class="ex-lab"><span class="ex-n">2</span> The checkable rule <span class="ex-hint">drafted from the sentence &middot; your expert confirms it</span></div>
-          <pre class="ex-prop" id="ex-prop"></pre>
-          <button class="ex-btn" id="ex-run" type="button" hidden>Run it against the evidence &rarr;</button>
-        </div>
-        <div class="ex-panel ex-dim" id="ex-reswrap">
-          <div class="ex-lab"><span class="ex-n">3</span> The result</div>
-          <div class="ex-verdict" id="ex-verdict">&mdash;</div>
-          <div class="ex-detail" id="ex-detail"></div>
-        </div>
-      </div>
-    </section>
-
     <div class="picker-intro">Same six controls, two lenses. The <b>Extract</b> panel above shows how a control&rsquo;s requirement becomes the check; the picker below lets you choose a control and run it in full &mdash; against Northwind&rsquo;s evidence, with the verdict and the exact record. Picking here and there stays in sync.</div>
     <div class="picker" id="picker"></div>
 
@@ -390,17 +410,8 @@
       <div><div class="k">Subjects</div><div class="v" id="ctx-count">&mdash;</div></div>
     </div>
 
-    <div class="sprs">
-      <div class="sprs-num"><span id="sprs-score">90</span><small>/110</small></div>
-      <div class="sprs-mid">
-        <div class="sprs-top">Live SPRS score <span class="sprs-sub">&mdash; DoD Assessment Methodology weights</span></div>
-        <div class="sprs-track"><div class="sprs-bar" id="sprs-bar"></div><div class="sprs-mark" title="88 = POA&amp;M threshold"></div></div>
-        <div class="sprs-status bad" id="sprs-status">&mdash;</div>
-      </div>
-      <div class="sprs-note">Flip any remediation and the real score moves. A score of 88 or higher still can&rsquo;t be certified if an open gap is worth more than 1 point &mdash; only 1-point items can go on a POA&amp;M.</div>
-    </div>
-
-    <div class="pipe">
+        <div class="workbench">
+          <div class="pipe">
       <div class="stage">
         <div class="node">1</div>
         <div class="slabel">The control, in plain English</div>
@@ -448,7 +459,8 @@
           <div class="toggle-hint">Flip the switch to remediate the environment. The checker re-runs and the verdict below re-derives from the changed evidence &mdash; nothing here is pre-recorded.</div>
         </div>
       </div>
-
+          </div>
+          <div class="pipe">
       <div class="stage">
         <div class="node">4</div>
         <div class="slabel">The check, against the actual evidence</div>
@@ -471,7 +483,8 @@
         <div id="s-evidence"></div>
         <div class="prov">Evaluated against the evidence provided. A PASS means <b>no violating record in these records</b> &mdash; not coverage beyond them; every verdict carries its source and record count.</div>
       </div>
-    </div>
+          </div>
+        </div>
 
     <div class="slabel" style="margin-top:30px;">Every subject evaluated &mdash; precise, not blunt</div>
     <table class="disc">
@@ -479,19 +492,33 @@
       <tbody id="s-roster"></tbody>
     </table>
     <p class="dek" style="margin-top:12px; font-size:14px;" id="s-rosternote"></p>
+      </section>
 
-    <div class="why">
-      <div class="c old">
-        <h3>A checklist / screenshot audit</h3>
-        <p>Captures one moment in time and marks a box green. Between assessments, drift is invisible &mdash; and a point-in-time snapshot can&rsquo;t tell you whether the control held every day in between.</p>
+    <section class="extract" id="extract" data-view="extract">
+      <div class="ex-head">
+        <div class="ex-eyebrow">Turn a written requirement into a running check</div>
+        <select id="ex-pick" aria-label="Choose a requirement"></select>
       </div>
-      <div class="c new">
-        <h3>This</h3>
-        <p>A formal rule, checked by a verifier that returns the exact violating record as its evidence. Deadline controls read your <b>event history</b> &mdash; the action and its revocation timestamps &mdash; so they catch access revoked late or never, including violations already patched over, which a point-in-time scan misses.</p>
+      <div class="ex-flow">
+        <div class="ex-panel">
+          <div class="ex-lab"><span class="ex-n">1</span> The requirement &mdash; <a id="ex-cite" class="ex-cite" href="#" target="_blank" rel="noopener"></a></div>
+          <div class="ex-prose" id="ex-prose"></div>
+          <button class="ex-btn" id="ex-draft" type="button">Draft the check &rarr;</button>
+        </div>
+        <div class="ex-panel ex-dim" id="ex-rulewrap">
+          <div class="ex-lab"><span class="ex-n">2</span> The checkable rule <span class="ex-hint">drafted from the sentence &middot; your expert confirms it</span></div>
+          <pre class="ex-prop" id="ex-prop"></pre>
+          <button class="ex-btn" id="ex-run" type="button" hidden>Run it against the evidence &rarr;</button>
+        </div>
+        <div class="ex-panel ex-dim" id="ex-reswrap">
+          <div class="ex-lab"><span class="ex-n">3</span> The result</div>
+          <div class="ex-verdict" id="ex-verdict">&mdash;</div>
+          <div class="ex-detail" id="ex-detail"></div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <section class="premium" id="premium">
+    <section class="premium" id="premium" data-view="premium">
       <div class="pr-eyebrow">The premium layer &middot; formal verification</div>
       <h2 class="pr-h">We can prove the process, not just the snapshot.</h2>
       <p class="pr-lead">Every check above reads your <b>evidence</b> &mdash; was that access revoked in time? The premium layer proves the <b>machine that produces the evidence</b>: does your revocation pipeline <b>always eventually</b> revoke, across every possible sequence of events? No point-in-time audit can answer that &mdash; only model-checking can.</p>
@@ -535,6 +562,22 @@ Spec == Init <span class="op">/\</span> [][Next]_vars <span class="op">/\</span>
       </div>
       <p class="pr-foot">This is genuine formal verification (model-checking) &mdash; a harder guarantee than the checks above, and the reason a formal-methods specialist is in the room. The entry tier checks your evidence; this proves the process behind it. Re-runnable from the actual spec on request.</p>
     </section>
+
+      <section class="view" data-view="sources">
+  <aside class="legend" id="legend" aria-label="Source documents">
+    <div class="lhead"><span>Source documents</span><button class="lclose" id="lclose" type="button" aria-label="Hide" title="Hide">&times;</button></div>
+    <div class="lsub">Every check is drafted from these governance sources &mdash; click any to open the original.</div>
+    <a class="ldoc cur" id="doc-171" href="#" target="_blank" rel="noopener"><b>NIST SP 800-171 Rev 2 &#8599;</b><span id="doc-171-sub">this control&rsquo;s requirement</span></a>
+    <a class="ldoc" href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171A.pdf" target="_blank" rel="noopener"><b>NIST SP 800-171A &#8599;</b><span>the 320 assessment objectives</span></a>
+    <a class="ldoc" href="https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL2v2.pdf" target="_blank" rel="noopener"><b>CMMC L2 Assessment Guide &#8599;</b><span>how an assessor tests each control</span></a>
+    <a class="ldoc" href="https://www.acq.osd.mil/asda/dpc/cp/cyber/docs/safeguarding/NIST-SP-800-171-Assessment-Methodology-Version-1.2.1-6.24.2020.pdf" target="_blank" rel="noopener"><b>DoD Assessment Methodology &#8599;</b><span>the SPRS 1 / 3 / 5 point weights</span></a>
+    <a class="ldoc" href="https://www.ecfr.gov/current/title-32/section-170.21" target="_blank" rel="noopener"><b>32 CFR 170.21 &#8599;</b><span>POA&amp;M eligibility &amp; the 180-day clock</span></a>
+    <div class="ldoc ssp"><b>Northwind SSP</b><span>your own policy parameters (24h, 7d&hellip;) &mdash; not NIST values</span></div>
+    <div class="lnote2">CMMC Level 2 assesses against <b>800-171 Rev 2</b> and its companion <b>800-171A</b> (per 32 CFR 170.17). NIST has since withdrawn <b>both</b> in favor of the Rev 3 editions, but CMMC does not use Rev 3 yet &mdash; so these references are deliberately the Rev 2-era versions.</div>
+  </aside>
+      </section>
+
+    </main>
 
     <footer>
       <span class="mark">Machine-checked control validation &middot; every verdict re-runs from an executable check you can falsify</span>
@@ -3435,5 +3478,30 @@ window.CONTROLS["separation-of-duties"] = {
     window.__exReset=reset;
     reset();
   })();
+})();
+</script>
+<script>
+/* view router -- additive; toggles [hidden] on one section at a time, deep-linkable via #/view */
+(function(){
+  var VIEWS=["overview","controls","extract","premium","sources"], DEFAULT="overview";
+  var sec={}, tab={};
+  VIEWS.forEach(function(v){
+    sec[v]=document.querySelector('section[data-view="'+v+'"]');
+    tab[v]=document.querySelector('a[data-nav="'+v+'"]');
+  });
+  function current(){
+    var h=(location.hash||"").replace(/^#\/?/,"");
+    return VIEWS.indexOf(h)>=0 ? h : DEFAULT;
+  }
+  function show(v){
+    VIEWS.forEach(function(k){
+      if(sec[k]) sec[k].hidden=(k!==v);
+      if(tab[k]){ tab[k].classList.toggle("active", k===v);
+                  tab[k].setAttribute("aria-current", k===v?"page":"false"); }
+    });
+    if(window.scrollTo) window.scrollTo(0,0);
+  }
+  window.addEventListener("hashchange", function(){ show(current()); });
+  show(current());
 })();
 </script>

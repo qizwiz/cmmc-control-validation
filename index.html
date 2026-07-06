@@ -205,6 +205,13 @@
   .legend .kssp{color:var(--amber); font-weight:700;}
   .legend .lnote{margin-top:4px; padding-top:10px; border-top:1px solid var(--line); color:var(--slate); line-height:1.45;}
   .legend .lnote b{font-family:var(--mono); color:var(--sky-deep); font-weight:600;}
+  .legend .lsub{font-size:11.5px; color:var(--slate); margin-bottom:11px; line-height:1.4;}
+  .legend .ldoc{display:block; text-decoration:none; padding:9px 10px; border:1px solid var(--line); border-radius:9px; margin-bottom:8px; background:var(--card); transition:border-color .15s, background .15s;}
+  .legend a.ldoc:hover{border-color:var(--sky); background:var(--sky-tint);}
+  .legend .ldoc b{display:block; font-size:11.5px; color:var(--sky-deep); font-weight:600; margin-bottom:2px;}
+  .legend .ldoc span{display:block; font-size:11px; color:var(--slate); line-height:1.35;}
+  .legend .ldoc.cur{border-color:var(--sky-deep); box-shadow:0 0 0 1px var(--sky-deep); background:var(--sky-tint);}
+  .legend .ldoc.ssp{cursor:default;} .legend .ldoc.ssp b{color:var(--amber);}
   @media(max-width:1260px){.legend{display:none;}}
 
   .sprs{display:grid; grid-template-columns:auto 1fr; gap:6px 20px; align-items:center; margin:16px 0 6px; padding:16px 18px;
@@ -225,16 +232,15 @@
 </style>
 
 <div class="wrap">
-  <aside class="legend" id="legend" aria-label="How to read this page">
-    <div class="lhead"><span>Reading this page</span><button class="lclose" id="lclose" type="button" aria-label="Hide legend" title="Hide">&times;</button></div>
-    <div class="lrow"><span class="lk sfail">FAIL</span><span class="lv">the property does not hold &mdash; a violating record exists</span></div>
-    <div class="lrow"><span class="lk spass">PASS</span><span class="lv">no violating record in the evidence provided</span></div>
-    <div class="lrow"><span class="lk mkv">&#10007;</span><span class="lv">this subject violates the control</span></div>
-    <div class="lrow"><span class="lk mkc">&#10003;</span><span class="lv">this subject is cleared</span></div>
-    <div class="lrow"><span class="lk cht">over&#8209;time</span><span class="lv">temporal &mdash; a property across a window of events</span></div>
-    <div class="lrow"><span class="lk chp">point</span><span class="lv">point&#8209;in&#8209;time &mdash; a single configuration state</span></div>
-    <div class="lrow"><span class="lk kssp">SSP</span><span class="lv">your own policy number (e.g. 24h) &mdash; never a NIST value</span></div>
-    <div class="lnote"><b>FORALL x&hellip; =&gt;</b> reads &ldquo;for every x, it must be that&hellip;&rdquo; &mdash; one precise rule, checked against every record.</div>
+  <aside class="legend" id="legend" aria-label="Source documents">
+    <div class="lhead"><span>Source documents</span><button class="lclose" id="lclose" type="button" aria-label="Hide" title="Hide">&times;</button></div>
+    <div class="lsub">Every check is drafted from these governance sources &mdash; click any to open the original.</div>
+    <a class="ldoc cur" id="doc-171" href="#" target="_blank" rel="noopener"><b>NIST SP 800-171 Rev 2 &#8599;</b><span id="doc-171-sub">this control&rsquo;s requirement</span></a>
+    <a class="ldoc" href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171A.pdf" target="_blank" rel="noopener"><b>NIST SP 800-171A &#8599;</b><span>the 320 assessment objectives</span></a>
+    <a class="ldoc" href="https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL2v2.pdf" target="_blank" rel="noopener"><b>CMMC L2 Assessment Guide &#8599;</b><span>how an assessor tests each control</span></a>
+    <a class="ldoc" href="https://www.acq.osd.mil/asda/dpc/cp/cyber/docs/safeguarding/NIST-SP-800-171-Assessment-Methodology-Version-1.2.1-6.24.2020.pdf" target="_blank" rel="noopener"><b>DoD Assessment Methodology &#8599;</b><span>the SPRS 1 / 3 / 5 point weights</span></a>
+    <a class="ldoc" href="https://www.ecfr.gov/current/title-32/section-170.21" target="_blank" rel="noopener"><b>32 CFR 170.21 &#8599;</b><span>POA&amp;M eligibility &amp; the 180-day clock</span></a>
+    <div class="ldoc ssp"><b>Northwind SSP</b><span>your own policy parameters (24h, 7d&hellip;) &mdash; not NIST values</span></div>
   </aside>
   <div class="col">
 
@@ -2022,6 +2028,8 @@ window.CONTROLS["separation-of-duties"] = {
     var src=SOURCE[state.id]||"#";
     document.getElementById("s-plain").innerHTML='<a class="control-id lnk" href="'+src+'" target="_blank" rel="noopener">'+esc(ctl.family)+' &#8599;</a> &mdash; '+esc(ctl.plainEnglish).replace(/CUI/g,'<span class="cui">CUI</span>');
     var rl=document.getElementById("s-reqlink"); if(rl){rl.href=src;}
+    var d1=document.getElementById("doc-171"); if(d1){ d1.href=src; }
+    var d1s=document.getElementById("doc-171-sub"); if(d1s){ d1s.textContent=(m.id||ctl.family)+" - this control's requirement"; }
     var kn=document.getElementById("s-kindnote"); kn.className="kindnote "+kind; kn.innerHTML=KINDNOTE[kind];
     document.getElementById("s-prop").innerHTML=colorize(ctl.propertyText);
 

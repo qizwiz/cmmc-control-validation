@@ -3508,3 +3508,359 @@ window.CONTROLS["separation-of-duties"] = {
   show(current());
 })();
 </script>
+<style>
+  /* ---- Guided tour overlay (additive, self-contained, pure ASCII) ---- */
+  .tour-launch{margin-left:auto; align-self:center; display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--mono); font-size:12px; letter-spacing:.03em; cursor:pointer; white-space:nowrap;
+    color:var(--ground); background:var(--sky-deep); border:none; border-radius:9px; padding:8px 13px;
+    transition:background .15s, filter .15s;}
+  .tour-launch:hover{background:var(--navy);}
+  .tour-launch:focus-visible{outline:2px solid var(--navy); outline-offset:2px;}
+  .tour-launch .pi{font-size:10px; line-height:1;}
+
+  .tour-pill{position:fixed; right:20px; bottom:20px; z-index:8000; display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--sky); border-radius:30px; padding:8px 9px 8px 14px;
+    box-shadow:0 12px 34px rgba(0,10,40,.42); font-family:var(--sans); animation:tourPillIn .4s ease;}
+  @keyframes tourPillIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+  .tour-pill .tp-go{appearance:none; cursor:pointer; font-family:var(--mono); font-size:12.5px; font-weight:600;
+    color:var(--navy); background:none; border:none; padding:2px 2px; display:inline-flex; align-items:center; gap:7px;}
+  .tour-pill .tp-go:hover{color:var(--sky-deep);}
+  .tour-pill .tp-go .pi{color:var(--sky-deep); font-size:11px;}
+  .tour-pill .tp-x{appearance:none; cursor:pointer; background:none; border:none; color:var(--faint);
+    font-size:17px; line-height:1; padding:0 4px;}
+  .tour-pill .tp-x:hover{color:var(--navy);}
+
+  .tour-veil{position:fixed; inset:0; z-index:9000; background:transparent; cursor:default;}
+  .tour-hole{position:fixed; z-index:9001; left:0; top:0; width:80px; height:80px; border-radius:12px;
+    pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(6,11,28,.74), 0 0 0 2px var(--sky-deep), 0 0 26px 6px rgba(110,193,228,.45);
+    transition:left .5s ease, top .5s ease, width .5s ease, height .5s ease;}
+
+  .tour-cursor{position:fixed; z-index:9003; left:0; top:0; pointer-events:none; will-change:transform;
+    transition:transform .7s cubic-bezier(.4,.08,.2,1);}
+  .tour-cursor svg{display:block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));}
+  .tour-cursor .ring{position:absolute; left:2px; top:2px; width:18px; height:18px; border-radius:50%;
+    border:2px solid var(--sky-deep); opacity:0; transform:scale(.4); pointer-events:none;}
+  .tour-cursor.tc-click svg{animation:tcPress .32s ease;}
+  .tour-cursor.tc-click .ring{animation:tcRing .48s ease-out;}
+  @keyframes tcPress{0%,100%{transform:scale(1);} 45%{transform:scale(.8);}}
+  @keyframes tcRing{0%{opacity:.75; transform:scale(.4);} 100%{opacity:0; transform:scale(2.6);}}
+
+  .tour-caption{position:fixed; z-index:9002; left:0; top:0; width:max-content; max-width:328px;
+    background:var(--card); border:1px solid var(--sky); border-radius:13px; padding:15px 16px;
+    box-shadow:0 16px 44px rgba(0,8,30,.55); font-family:var(--sans);
+    transition:left .45s ease, top .45s ease;}
+  .tour-caption .tc-title{font-family:var(--slab); font-weight:700; font-size:15px; color:var(--navy); margin-bottom:6px; line-height:1.25;}
+  .tour-caption .tc-text{font-size:13.5px; line-height:1.55; color:var(--slate);}
+  .tour-caption .tc-foot{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .tour-caption .tc-count{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--faint);}
+  .tour-caption .tc-nav{margin-left:auto; display:flex; gap:7px;}
+  .tour-caption button{appearance:none; cursor:pointer; font-family:var(--mono); font-size:12px; border-radius:8px;
+    padding:7px 12px; border:1px solid var(--line2); background:var(--ground); color:var(--slate); transition:filter .15s, color .15s, border-color .15s;}
+  .tour-caption button:hover{border-color:var(--sky); color:var(--navy);}
+  .tour-caption .tc-skip{border-color:transparent; background:none; color:var(--faint); padding-left:2px; padding-right:2px;}
+  .tour-caption .tc-skip:hover{color:var(--red);}
+  .tour-caption .tc-next{background:var(--sky-deep); border-color:var(--sky-deep); color:var(--ground); font-weight:600;}
+  .tour-caption .tc-next:hover{filter:brightness(1.08); color:var(--ground);}
+  .tour-caption button:disabled{opacity:.4; cursor:default;}
+  .tour-caption button:disabled:hover{border-color:var(--line2); color:var(--slate);}
+
+  @media(prefers-reduced-motion:reduce){
+    .tour-hole{transition:none;} .tour-cursor{transition:none;} .tour-caption{transition:none;}
+    .tour-cursor.tc-click svg{animation:none;} .tour-cursor.tc-click .ring{animation:none;}
+    .tour-pill{animation:none;}
+  }
+  @media(max-width:520px){ .tour-caption{max-width:calc(100vw - 24px);} }
+</style>
+<script>
+/* Guided "How this works" tour -- additive; drives the real UI (hash router, run
+   button, remediation toggle) via live getBoundingClientRect targeting. Never
+   auto-plays; Esc / Skip exit cleanly and restore any changed state. Pure ASCII. */
+(function(){
+  var RM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
+  var GAP = 14, HPAD = 8;
+
+  function vw(){ return window.innerWidth || document.documentElement.clientWidth; }
+  function vh(){ return window.innerHeight || document.documentElement.clientHeight; }
+  function id(x){ return document.getElementById(x); }
+  function qs(s){ return document.querySelector(s); }
+
+  /* ---- overlay elements (hidden until the tour starts) ---- */
+  var veil = document.createElement("div"); veil.className = "tour-veil"; veil.style.display = "none";
+  var hole = document.createElement("div"); hole.className = "tour-hole"; hole.style.display = "none";
+  var cursor = document.createElement("div"); cursor.className = "tour-cursor"; cursor.style.display = "none";
+  cursor.innerHTML =
+    '<svg width="24" height="28" viewBox="0 0 24 28" aria-hidden="true">' +
+    '<path d="M3 2 L3 22 L8.5 17 L12 25.5 L15.5 24 L12 15.5 L19 15.5 Z" fill="#f3f6fd" stroke="#0d1530" stroke-width="1.5" stroke-linejoin="round"/>' +
+    '</svg><span class="ring"></span>';
+  var caption = document.createElement("div"); caption.className = "tour-caption"; caption.style.display = "none";
+  caption.innerHTML =
+    '<div class="tc-title" id="tc-title"></div>' +
+    '<div class="tc-text" id="tc-text"></div>' +
+    '<div class="tc-foot">' +
+      '<button type="button" class="tc-skip" id="tc-skip">Skip</button>' +
+      '<span class="tc-count" id="tc-count"></span>' +
+      '<span class="tc-nav">' +
+        '<button type="button" class="tc-back" id="tc-back">Back</button>' +
+        '<button type="button" class="tc-next" id="tc-next">Next &rarr;</button>' +
+      '</span>' +
+    '</div>';
+  document.body.appendChild(veil);
+  document.body.appendChild(hole);
+  document.body.appendChild(caption);
+  document.body.appendChild(cursor);
+
+  /* ---- launch affordances ---- */
+  var nav = qs(".appnav");
+  if(nav){
+    var lb = document.createElement("button");
+    lb.type = "button"; lb.className = "tour-launch";
+    lb.innerHTML = '<span class="pi">&#9654;</span> How this works';
+    lb.addEventListener("click", start);
+    nav.appendChild(lb);
+  }
+  var pill = document.createElement("div"); pill.className = "tour-pill";
+  pill.innerHTML =
+    '<button type="button" class="tp-go"><span class="pi">&#9654;</span> Take the tour</button>' +
+    '<button type="button" class="tp-x" aria-label="Dismiss the tour offer" title="Dismiss">&times;</button>';
+  document.body.appendChild(pill);
+  pill.querySelector(".tp-go").addEventListener("click", start);
+  pill.querySelector(".tp-x").addEventListener("click", hidePill);
+  function hidePill(){ pill.style.display = "none"; }
+
+  /* ---- the flow ---- */
+  var steps = [
+    { view:"overview", place:"below",
+      target:function(){ return [ qs(".sprs") ]; },
+      cursorEl:function(){ return id("sprs-score"); },
+      title:"Your live compliance score",
+      text:"This is your SPRS score, weighted the way the DoD scores it. It moves the moment you fix or break a control below." },
+
+    { view:"controls", place:"below",
+      target:function(){ return [ id("picker") ]; },
+      cursorEl:function(){ return qs("#picker .chip"); },
+      title:"Pick a control to check",
+      text:"Choose any control here. Each one is drawn from a real CMMC / NIST 800-171 requirement, grouped by how it gets checked." },
+
+    { view:"controls", place:"auto",
+      target:function(){ var p = id("s-prop"); return [ p ? (p.closest ? p.closest(".card") : p) : null ]; },
+      cursorEl:function(){ return id("s-prop"); },
+      title:"The exact rule, in plain English",
+      text:"This is the precise rule the machine runs, with the same logic written out in plain language right beneath it. Nothing is hidden." },
+
+    { view:"controls", place:"auto", clickTarget:true,
+      target:function(){ return [ id("run-btn") ]; },
+      title:"Press Run to evaluate",
+      text:"Run evaluates the rule against the real evidence, one subject at a time. Watch -- it is running now.",
+      onArrive:function(){ var b = id("run-btn"); if(b){ b.click(); } } },
+
+    { view:"controls", place:"auto",
+      target:function(){ return [ id("stage-verdict"), id("stage-evidence") ]; },
+      cursorEl:function(){ return id("s-verdict"); },
+      title:"The verdict and the proof",
+      text:"Here is the verdict, and the exact record that broke the rule -- the counterexample an assessor can open and inspect." },
+
+    { view:"controls", place:"auto", clickTarget:true,
+      target:function(){ var t = id("fix-toggle"); return [ t ? (t.closest ? t.closest(".toggle-card") : t) : null ]; },
+      cursorEl:function(){ return qs(".switch"); },
+      title:"Flip the fix, watch it move",
+      text:"Flip the what-if remediation. The checker re-runs on the changed evidence and the verdict -- and the score up top -- re-derive live.",
+      onArrive:function(){ var t = id("fix-toggle"); if(t && !t.checked){ t.click(); } } },
+
+    { view:"controls", place:"left", prep:revealLegend,
+      target:function(){ return [ id("legend") ]; },
+      cursorEl:function(){ return qs("#legend .ldoc"); },
+      title:"Every check traces to a real document",
+      text:"Each rule is drafted from these government sources: 800-171, the CMMC Assessment Guide, 32 CFR. They are always one click away." },
+
+    { view:"premium", place:"auto",
+      target:function(){ return [ qs(".pr-tla") ]; },
+      cursorEl:function(){ return qs(".pr-tla"); },
+      title:"Proving the process itself",
+      text:"The premium layer goes further: real formal verification (TLA+ model-checking) proves the revocation process holds across every possible sequence of events, not just today." }
+  ];
+
+  var active = false, idx = 0, gen = 0;
+  var savedHash = null, savedFix = null, savedCollapsed = false, legendForced = false;
+
+  function revealLegend(){
+    var lg = id("legend"); if(!lg){ return; }
+    lg.classList.remove("collapsed");
+    lg.style.setProperty("display", "block", "important");
+    legendForced = true;
+  }
+  function restoreLegend(){
+    var lg = id("legend"); if(!lg){ return; }
+    if(legendForced){ lg.style.removeProperty("display"); legendForced = false; }
+    if(savedCollapsed){ lg.classList.add("collapsed"); } else { lg.classList.remove("collapsed"); }
+  }
+
+  /* ---- geometry helpers ---- */
+  function unionRect(els){
+    var x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+    for(var i=0;i<els.length;i++){
+      var e = els[i]; if(!e || !e.getBoundingClientRect){ continue; }
+      var r = e.getBoundingClientRect();
+      if(r.width === 0 && r.height === 0){ continue; }
+      if(r.left < x1){ x1 = r.left; } if(r.top < y1){ y1 = r.top; }
+      if(r.right > x2){ x2 = r.right; } if(r.bottom > y2){ y2 = r.bottom; }
+    }
+    if(x1 > x2){ return { left:vw()/2-40, top:vh()/2-40, width:80, height:80, right:vw()/2+40, bottom:vh()/2+40 }; }
+    return { left:x1, top:y1, width:x2-x1, height:y2-y1, right:x2, bottom:y2 };
+  }
+  function centerOf(el){ var r = el.getBoundingClientRect(); return { x:r.left + r.width/2, y:r.top + r.height/2 }; }
+  function positionHole(r){
+    hole.style.left = (r.left - HPAD) + "px";
+    hole.style.top = (r.top - HPAD) + "px";
+    hole.style.width = (r.width + HPAD*2) + "px";
+    hole.style.height = (r.height + HPAD*2) + "px";
+  }
+  function positionCaption(r, place){
+    var cw = caption.offsetWidth, ch = caption.offsetHeight, L, T;
+    place = place || "auto";
+    function below(){ T = r.bottom + GAP; L = r.left; }
+    function above(){ T = r.top - GAP - ch; L = r.left; }
+    function leftp(){ L = r.left - GAP - cw; T = r.top; }
+    function rightp(){ L = r.right + GAP; T = r.top; }
+    if(place === "below"){ below(); }
+    else if(place === "above"){ above(); }
+    else if(place === "left"){ leftp(); }
+    else if(place === "right"){ rightp(); }
+    else {
+      if(r.bottom + GAP + ch <= vh() - 8){ below(); }
+      else if(r.top - GAP - ch >= 8){ above(); }
+      else if(r.right + GAP + cw <= vw() - 8){ rightp(); }
+      else { leftp(); }
+    }
+    L = Math.max(10, Math.min(L, vw() - cw - 10));
+    T = Math.max(10, Math.min(T, vh() - ch - 10));
+    caption.style.left = L + "px"; caption.style.top = T + "px";
+  }
+  function moveCursor(pt){ cursor.style.transform = "translate(" + (pt.x - 3) + "px," + (pt.y - 2) + "px)"; }
+  function cursorClick(){
+    if(RM){ return; }
+    cursor.classList.remove("tc-click"); void cursor.offsetWidth; cursor.classList.add("tc-click");
+    setTimeout(function(){ cursor.classList.remove("tc-click"); }, 500);
+  }
+  function scrollRectCenter(r){
+    if(r.height <= 0){ return; }
+    if(r.top >= 50 && r.bottom <= vh() - 50){ return; }
+    var y = window.pageYOffset + r.top + r.height/2 - vh()/2;
+    window.scrollTo(0, Math.max(0, y));
+  }
+  function raf2(fn){
+    if(window.requestAnimationFrame){ requestAnimationFrame(function(){ requestAnimationFrame(fn); }); }
+    else { setTimeout(fn, 32); }
+  }
+  function anyFixed(els){
+    for(var i=0;i<els.length;i++){
+      var e = els[i]; if(!e){ continue; }
+      try { if(getComputedStyle(e).position === "fixed"){ return true; } } catch(err){}
+    }
+    return false;
+  }
+
+  /* ---- view switching via the real hash router ---- */
+  function ensureView(v, cb){
+    var cur = (location.hash || "").replace(/^#\/?/, "");
+    if(cur !== v){ location.hash = "#/" + v; setTimeout(cb, RM ? 60 : 280); }
+    else { cb(); }
+  }
+
+  /* ---- caption text / controls ---- */
+  function setCaption(s){
+    id("tc-title").innerHTML = s.title;
+    id("tc-text").innerHTML = s.text;
+    id("tc-count").textContent = (idx + 1) + " / " + steps.length;
+    id("tc-back").disabled = (idx === 0);
+    var last = (idx === steps.length - 1);
+    id("tc-next").innerHTML = last ? "&#8635; Replay" : "Next &rarr;";
+    id("tc-skip").textContent = last ? "Done" : "Skip";
+  }
+
+  function go(i){
+    if(!active){ return; }
+    idx = Math.max(0, Math.min(steps.length - 1, i));
+    var g = ++gen, s = steps[idx];
+    setCaption(s);
+    ensureView(s.view, function(){
+      if(!active || g !== gen){ return; }
+      if(s.prep){ s.prep(); }
+      var settle = s.prep ? (RM ? 0 : 150) : (RM ? 0 : 20);
+      setTimeout(function(){
+        if(!active || g !== gen){ return; }
+        var els = s.target();
+        if(!anyFixed(els)){ scrollRectCenter(unionRect(els)); }
+        raf2(function(){
+          if(!active || g !== gen){ return; }
+          var r = unionRect(els);
+          positionHole(r);
+          positionCaption(r, s.place);
+          var focus = (s.cursorEl && s.cursorEl()) || els[0];
+          moveCursor(focus ? centerOf(focus) : { x:r.left + r.width/2, y:r.top + r.height/2 });
+          if(s.clickTarget){
+            setTimeout(function(){
+              if(!active || g !== gen){ return; }
+              cursorClick();
+              setTimeout(function(){ if(active && g === gen && s.onArrive){ s.onArrive(); } }, RM ? 0 : 130);
+            }, RM ? 0 : 780);
+          } else if(s.onArrive){ s.onArrive(); }
+        });
+      }, settle);
+    });
+  }
+
+  function reposition(){
+    if(!active){ return; }
+    var s = steps[idx], els = s.target(), r = unionRect(els);
+    positionHole(r); positionCaption(r, s.place);
+    var focus = (s.cursorEl && s.cursorEl()) || els[0];
+    if(focus){ moveCursor(centerOf(focus)); }
+  }
+  var resizeT = null;
+  function onResize(){ if(resizeT){ clearTimeout(resizeT); } resizeT = setTimeout(reposition, 120); }
+  function onKey(e){
+    if(!active){ return; }
+    if(e.key === "Escape" || e.keyCode === 27){ e.preventDefault(); exit(); }
+    else if(e.key === "ArrowRight"){ if(idx < steps.length - 1){ go(idx + 1); } }
+    else if(e.key === "ArrowLeft"){ if(idx > 0){ go(idx - 1); } }
+  }
+
+  function start(){
+    if(active){ return; }
+    active = true;
+    savedHash = location.hash || "";
+    var tog = id("fix-toggle"); savedFix = tog ? tog.checked : null;
+    var lg = id("legend"); savedCollapsed = lg ? lg.classList.contains("collapsed") : false;
+    hidePill();
+    veil.style.display = "block"; hole.style.display = "block";
+    caption.style.display = "block"; cursor.style.display = "block";
+    cursor.style.transform = "translate(" + (vw()/2) + "px," + (vh()*0.42) + "px)";
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    idx = 0;
+    go(0);
+  }
+
+  function exit(){
+    if(!active){ return; }
+    active = false; gen++;
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("resize", onResize);
+    restoreLegend();
+    var tog = id("fix-toggle");
+    if(tog && savedFix != null && tog.checked !== savedFix){ tog.click(); }
+    if(savedHash != null && (location.hash || "") !== savedHash){ location.hash = savedHash || "#/overview"; }
+    veil.style.display = "none"; hole.style.display = "none";
+    caption.style.display = "none"; cursor.style.display = "none";
+    cursor.classList.remove("tc-click");
+  }
+
+  var next = id("tc-next"), back = id("tc-back"), skip = id("tc-skip");
+  next.addEventListener("click", function(){ if(idx === steps.length - 1){ go(0); } else { go(idx + 1); } });
+  back.addEventListener("click", function(){ go(idx - 1); });
+  skip.addEventListener("click", exit);
+
+  veil.addEventListener("click", function(e){ e.stopPropagation(); });
+})();
+</script>

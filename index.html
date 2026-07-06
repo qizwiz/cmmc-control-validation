@@ -213,6 +213,8 @@
   .legend .ldoc span{display:block; font-size:11px; color:var(--slate); line-height:1.35;}
   .legend .ldoc.cur{border-color:var(--sky-deep); box-shadow:0 0 0 1px var(--sky-deep); background:var(--sky-tint);}
   .legend .ldoc.ssp{cursor:default;} .legend .ldoc.ssp b{color:var(--amber);}
+  .legend .lnote2{font-size:10.5px; color:var(--faint); line-height:1.45; border-top:1px solid var(--line); padding-top:9px; margin-top:3px;}
+  .legend .lnote2 b{color:var(--slate);}
   @media(max-width:1500px){.legend{display:none;}}
 
   .sprs{display:grid; grid-template-columns:auto 1fr; gap:6px 20px; align-items:center; margin:16px 0 6px; padding:16px 18px;
@@ -242,6 +244,7 @@
     <a class="ldoc" href="https://www.acq.osd.mil/asda/dpc/cp/cyber/docs/safeguarding/NIST-SP-800-171-Assessment-Methodology-Version-1.2.1-6.24.2020.pdf" target="_blank" rel="noopener"><b>DoD Assessment Methodology &#8599;</b><span>the SPRS 1 / 3 / 5 point weights</span></a>
     <a class="ldoc" href="https://www.ecfr.gov/current/title-32/section-170.21" target="_blank" rel="noopener"><b>32 CFR 170.21 &#8599;</b><span>POA&amp;M eligibility &amp; the 180-day clock</span></a>
     <div class="ldoc ssp"><b>Northwind SSP</b><span>your own policy parameters (24h, 7d&hellip;) &mdash; not NIST values</span></div>
+    <div class="lnote2">CMMC Level 2 assesses against <b>800-171 Rev 2</b> (per 32 CFR 170.17) &mdash; NIST withdrew Rev 2 in favor of Rev 3, but CMMC does not use Rev 3 yet. These references are deliberately Rev 2.</div>
   </aside>
   <div class="col">
 

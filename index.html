@@ -265,6 +265,31 @@
   .ex-verdict{font-family:var(--slab); font-weight:700; font-size:22px; color:var(--faint);}
   .ex-verdict.fail{color:var(--red);} .ex-verdict.pass{color:var(--green);}
   .ex-detail{font-size:12.5px; color:var(--slate); line-height:1.5;}
+
+  .premium{margin:30px 0 8px; padding:20px 22px; border:1px solid var(--line2); border-radius:14px; background:var(--card);}
+  .pr-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--amber);}
+  .pr-h{font-family:var(--slab); font-size:clamp(20px,3vw,26px); color:var(--navy); margin:8px 0 10px; font-weight:700; line-height:1.15;}
+  .pr-lead{font-size:14.5px; color:var(--slate); line-height:1.55; max-width:72ch;}
+  .pr-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0 14px;}
+  @media(max-width:700px){.pr-grid{grid-template-columns:1fr;}}
+  .pr-card{border:1px solid var(--line); border-radius:11px; padding:14px; background:var(--ground);}
+  .pr-card.pr-hold{border-color:var(--green-line);} .pr-card.pr-fail{border-color:var(--red-line);}
+  .pr-lab{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-bottom:6px;}
+  .pr-verdict{font-family:var(--slab); font-weight:700; font-size:20px; margin-bottom:7px;}
+  .pr-verdict.pass{color:var(--green);} .pr-verdict.fail{color:var(--red);}
+  .pr-card p{font-size:13px; color:var(--slate); line-height:1.5;}
+  .pr-mono{font-family:var(--mono); color:var(--sky-deep);}
+  .pr-trace{margin:10px 0 0; font-family:var(--mono); font-size:11px; line-height:1.5; color:var(--red); background:var(--red-tint); border-radius:7px; padding:9px 11px; white-space:pre; overflow-x:auto;}
+  .pr-foot{font-size:12.5px; color:var(--faint); line-height:1.5; border-top:1px solid var(--line); padding-top:11px; max-width:74ch;}
+  .pr-sbs{display:grid; grid-template-columns:1fr 1.2fr; gap:14px; margin:14px 0;}
+  @media(max-width:700px){.pr-sbs{grid-template-columns:1fr;}}
+  .pr-sbs-col{min-width:0;}
+  .pr-eng{font-size:14px; color:var(--ink); line-height:1.55; margin-bottom:8px;}
+  .pr-note{font-size:12.5px; color:var(--faint); line-height:1.5;}
+  .pr-hint2{text-transform:none; letter-spacing:0; color:var(--faint); font-weight:400;}
+  .pr-tla{margin:0; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--ink); background:var(--ground); border:1px solid var(--line); border-radius:8px; padding:11px 12px; white-space:pre; overflow-x:auto;}
+  .pr-tla .c{color:var(--faint);} .pr-tla .op{color:var(--amber);} .pr-tla .kw{color:var(--green); font-weight:600;}
+  .pr-found{font-size:13px; color:var(--slate); margin:6px 0 2px;}
 </style>
 
 <div class="wrap">
@@ -429,6 +454,50 @@
       </div>
     </div>
 
+    <section class="premium" id="premium">
+      <div class="pr-eyebrow">The premium layer &middot; formal verification</div>
+      <h2 class="pr-h">We can prove the process, not just the snapshot.</h2>
+      <p class="pr-lead">Every check above reads your <b>evidence</b> &mdash; was that access revoked in time? The premium layer proves the <b>machine that produces the evidence</b>: does your revocation pipeline <b>always eventually</b> revoke, across every possible sequence of events? No point-in-time audit can answer that &mdash; only model-checking can.</p>
+      <div class="pr-sbs">
+        <div class="pr-sbs-col">
+          <div class="pr-lab">The requirement, in English</div>
+          <p class="pr-eng">Protect CUI during and after personnel actions &mdash; when someone is terminated, their access must not linger.</p>
+          <p class="pr-note">A snapshot asks &ldquo;was it revoked in time?&rdquo; It cannot ask whether it <b>always will be</b>.</p>
+        </div>
+        <div class="pr-sbs-col">
+          <div class="pr-lab">The model, in TLA+ <span class="pr-hint2">&mdash; excerpt from the real spec</span></div>
+          <pre class="pr-tla"><span class="c">\* obligation: a terminated user is eventually revoked</span>
+Liveness == terminated <span class="op">~&gt;</span> revoked
+
+<span class="c">\* the worker revokes, but only while it is up</span>
+WorkerRevoke == queued <span class="op">/\</span> workerUp <span class="op">/\</span> revoked' = TRUE
+
+<span class="c">\* it can crash before it acts -- what starves it</span>
+Crash == workerUp <span class="op">/\</span> ~revoked <span class="op">/\</span> workerUp' = FALSE
+
+<span class="c">\* holds ONLY under strong fairness</span>
+Spec == Init <span class="op">/\</span> [][Next]_vars <span class="op">/\</span> <span class="kw">SF_vars(WorkerRevoke)</span></pre>
+        </div>
+      </div>
+      <div class="pr-found">Point the model checker at that spec and it explores <b>every reachable behavior</b>:</div>
+      <div class="pr-grid">
+        <div class="pr-card pr-hold">
+          <div class="pr-lab">Supervised worker</div>
+          <div class="pr-verdict pass">PROVEN</div>
+          <p>The model checker explored every reachable behavior. <b>No failure exists</b> &mdash; the obligation <span class="pr-mono">terminated &#8605; revoked</span> holds in every one.</p>
+        </div>
+        <div class="pr-card pr-fail">
+          <div class="pr-lab">Best-effort retry, no supervision</div>
+          <div class="pr-verdict fail">FAILS</div>
+          <p>It returns a <b>concrete counterexample</b>: a crash-loop where the account stays live <b>forever</b> &mdash; while every snapshot the assessor sees still shows green.</p>
+          <pre class="pr-trace">terminated  -&gt;  queued
+   worker crashes   &lt;-.
+   worker restarts  --'   (never revokes)
+=&gt;  obligation VIOLATED</pre>
+        </div>
+      </div>
+      <p class="pr-foot">This is genuine formal verification (model-checking) &mdash; a harder guarantee than the checks above, and the reason a formal-methods specialist is in the room. The entry tier checks your evidence; this proves the process behind it. Re-runnable from the actual spec on request.</p>
+    </section>
 
     <footer>
       <span class="mark">Machine-checked control validation &middot; every verdict re-runs from an executable check you can falsify</span>

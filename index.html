@@ -294,6 +294,11 @@
   .rtoggle:hover{filter:brightness(1.2);}
   .rtoggle.vhdr{color:var(--red);} .rtoggle.chdr{color:var(--green);}
   .await{font-size:13.5px; color:var(--slate); line-height:1.5; padding:12px 2px;}
+  .prop-plain{margin-top:11px; font-size:13.5px; color:var(--ink); line-height:1.55; border-left:3px solid var(--sky); padding:3px 0 3px 12px;}
+  .prop-key{margin-top:9px; font-size:11px; color:var(--faint); line-height:1.5;}
+  .prop-key b{color:var(--sky-deep); font-family:var(--mono);}
+  .picker-intro{margin:22px 0 2px; font-size:13.5px; color:var(--slate); line-height:1.55; max-width:72ch;}
+  .picker-intro b{color:var(--navy);}
   .doctree{margin-top:11px;}
   .doctree summary{cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--sky-deep); list-style:none;}
   .doctree summary::-webkit-details-marker{display:none;}
@@ -374,6 +379,7 @@
       </div>
     </section>
 
+    <div class="picker-intro">Same six controls, two lenses. The <b>Extract</b> panel above shows how a control&rsquo;s requirement becomes the check; the picker below lets you choose a control and run it in full &mdash; against Northwind&rsquo;s evidence, with the verdict and the exact record. Picking here and there stays in sync.</div>
     <div class="picker" id="picker"></div>
 
     <div class="ctx">
@@ -421,6 +427,8 @@
         <div class="slabel">The exact rule the machine runs against your evidence</div>
         <div class="card">
           <pre class="prop" id="s-prop"></pre>
+          <div class="prop-plain" id="s-prop-plain"></div>
+          <div class="prop-key">Reading the notation: <b>FORALL</b> = &ldquo;for every&rdquo; &middot; <b>=&gt;</b> = &ldquo;then it must be that&rdquo; &middot; <b>!=</b> = &ldquo;is not&rdquo; &middot; a violation is any record where the rule does <i>not</i> hold.</div>
           <div class="caveat">Thresholds shown (24h, 7 days, 15 min&hellip;) are <b>your SSP-defined parameters</b> &mdash; the checker validates the parameter you set, not a number it invented.</div>
         </div>
       </div>
@@ -3163,6 +3171,14 @@ window.CONTROLS["separation-of-duties"] = {
     "separation-of-duties":  {req:"3.1.4",  obj:"3.1.4[a]-[c]",  ssp:"your SSP defines the conflicting-duty pairs"},
     "session-lock":          {req:"3.1.10", obj:"3.1.10[a]-[c]", ssp:"your SSP sets the inactivity-lock timeout (15 min)"}
   };
+  var PROP_PLAIN = {
+    "deprovision-cui": "In plain terms: for every bit of CUI-system access a terminated or transferred person still holds, it must have been shut off within your SSP's window of their departure. Any access that lingered past the window is a finding.",
+    "audit-review-cadence": "In plain terms: for every CUI system, no gap between two consecutive log reviews may exceed your SSP's cadence, anywhere across the monitoring window. A single lapse -- even one later caught up -- is a finding.",
+    "least-privilege-admin": "In plain terms: for every admin-level grant a person holds, it must be justified by their role or a signed, unexpired waiver. An elevated grant with no authorization is a finding.",
+    "mfa-on-cui": "In plain terms: for every way a person can reach a CUI system, if multi-factor is required for that path, it has to actually be enabled. A required-but-missing factor is a finding.",
+    "separation-of-duties": "In plain terms: for every pair of duties your SSP marks as conflicting, no single person may hold both on the same system. One person holding both sides of a conflict is a finding.",
+    "session-lock": "In plain terms: for every CUI asset, the screen must lock after your SSP's inactivity timeout and conceal what was on it. An asset that fails either is a finding."
+  };
   var KW = {"for":1,"every":1,"FORALL":1,"EXISTS":1,"not":1,"NOT":1};
   var OP = {"=>":1,"->":1,"==>":1,"IMPLIES":1,"AND":1,"OR":1,"in":1,"!=":1,">=":1,"<=":1,"IF":1,"THEN":1};
 
@@ -3215,7 +3231,7 @@ window.CONTROLS["separation-of-duties"] = {
       ids.forEach(function(id){ if(!C[id]) return;
         var b=document.createElement("button"); b.className="chip"+(id===state.id?" active":"");
         b.innerHTML='<span class="fam">'+esc(C[id].family)+'</span><span class="ttl">'+esc(CHIP[id]||C[id].title)+'</span>';
-        b.onclick=function(){ state.id=id; state.fixed=!!state.fixedSet[id]; state.ran=false; render(); };
+        b.onclick=function(){ state.id=id; state.fixed=!!state.fixedSet[id]; state.ran=false; render(); if(window.__exReset){window.__exReset();} };
         chips.appendChild(b);
       });
       box.appendChild(chips); host.appendChild(box);
@@ -3245,6 +3261,7 @@ window.CONTROLS["separation-of-duties"] = {
     var d1s=document.getElementById("doc-171-sub"); if(d1s){ d1s.textContent=(m.id||ctl.family)+" - this control's requirement"; }
     var kn=document.getElementById("s-kindnote"); kn.className="kindnote "+kind; kn.innerHTML=KINDNOTE[kind];
     document.getElementById("s-prop").innerHTML=colorize(ctl.propertyText);
+    var pp=document.getElementById("s-prop-plain"); if(pp){ pp.textContent=PROP_PLAIN[state.id]||""; }
 
     var tog=document.getElementById("fix-toggle"); tog.checked=state.fixed;
     document.getElementById("fix-label").textContent=ctl.toggles[0].label;
@@ -3381,7 +3398,7 @@ window.CONTROLS["separation-of-duties"] = {
     var propEl=document.getElementById("ex-prop"), draftBtn=document.getElementById("ex-draft"), runBtn=document.getElementById("ex-run"),
         rw=document.getElementById("ex-rulewrap"), rsw=document.getElementById("ex-reswrap");
     function reset(){
-      var id=pick.value, rp=REQ_PROSE[id]||{req:"",cite:id};
+      var id=state.id, rp=REQ_PROSE[id]||{req:"",cite:id}; if(pick){pick.value=id;}
       document.getElementById("ex-prose").textContent='"'+rp.req+'"';
       var cite=document.getElementById("ex-cite"); cite.textContent=rp.cite; cite.href=(typeof SOURCE!=="undefined"&&SOURCE[id])||"#";
       propEl.classList.remove("show"); propEl.innerHTML="";
@@ -3392,7 +3409,7 @@ window.CONTROLS["separation-of-duties"] = {
       draftBtn.disabled=false; draftBtn.textContent="Draft the check ->";
     }
     draftBtn.addEventListener("click", function(){
-      var c=C[pick.value]; if(!c) return;
+      var c=C[state.id]; if(!c) return;
       draftBtn.disabled=true; draftBtn.textContent="reading the requirement...";
       setTimeout(function(){
         rw.classList.remove("ex-dim"); rw.classList.add("ex-live");
@@ -3401,7 +3418,7 @@ window.CONTROLS["separation-of-duties"] = {
       }, 650);
     });
     runBtn.addEventListener("click", function(){
-      var c=C[pick.value]; if(!c) return;
+      var c=C[state.id]; if(!c) return;
       runBtn.disabled=true; runBtn.textContent="running...";
       var res=c.check(c.scenario), subj=res.subjectsExamined||0, nf=(res.findings||[]).length, f=(res.findings&&res.findings[0])||null;
       setTimeout(function(){
@@ -3414,7 +3431,8 @@ window.CONTROLS["separation-of-duties"] = {
         runBtn.disabled=false; runBtn.textContent="Run it against the evidence ->";
       }, 500);
     });
-    pick.addEventListener("change", reset);
+    pick.addEventListener("change", function(){ state.id=pick.value; state.fixed=!!state.fixedSet[state.id]; state.ran=false; render(); reset(); });
+    window.__exReset=reset;
     reset();
   })();
 })();

@@ -92,6 +92,7 @@
   .kindnote.temporal{background:var(--sky-tint); color:var(--sky-deep); border:1px solid var(--sky);}
   .kindnote.point{background:var(--ground); color:var(--gray); border:1px solid var(--line);}
   .kindnote b{font-weight:600;}
+  .metanote{margin-top:8px; font-size:11.5px; color:var(--faint); font-style:italic; line-height:1.45;}
 
   pre.prop{margin:0; font-family:var(--mono); font-size:13px; line-height:1.75; color:var(--ink); white-space:pre-wrap; overflow-x:auto;}
   pre.prop .kw{color:var(--sky-deep); font-weight:600;} pre.prop .op{color:var(--amber);}
@@ -218,6 +219,13 @@
   .legend .lnote2{font-size:10.5px; color:var(--faint); line-height:1.45; border-top:1px solid var(--line); padding-top:9px; margin-top:3px;}
   .legend .lnote2 b{color:var(--slate);}
   @media(max-width:1500px){.legend{display:none;}}
+
+  .fca-strip{margin:14px 0 0; padding:11px 16px; border-left:4px solid var(--amber); border-radius:0 10px 10px 0;
+    background:var(--sky-tint); font-size:13.5px; color:var(--slate); line-height:1.5;}
+  .fca-strip b{color:var(--navy); font-weight:700;}
+  .fca-cite{display:inline-block; margin-left:6px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;
+    color:var(--sky-deep); text-decoration:none; border-bottom:1px dotted var(--sky-deep); white-space:nowrap;}
+  .fca-cite:hover{color:var(--navy); border-bottom-color:var(--navy);}
 
   .sprs{display:grid; grid-template-columns:auto 1fr; gap:6px 20px; align-items:center; margin:16px 0 6px; padding:16px 18px;
     background:var(--card); border:1px solid var(--line2); border-radius:14px; box-shadow:0 8px 24px rgba(0,15,63,.07);}
@@ -357,7 +365,7 @@
       </nav>
       <div class="stickybar" id="stickybar">
         <div class="sb-left"><span class="sb-org">Northwind Defense Systems</span><span class="sb-ctl" id="sb-ctl">&mdash;</span><span class="sb-verdict" id="sb-verdict">&mdash;</span></div>
-        <div class="sb-right">Live SPRS <b id="sb-score">90</b><span>/110</span></div>
+        <div class="sb-right">Live SPRS <b id="sb-score" title="Score = 110 minus the weights of failing checks among the six practices under automated check. The other 104 are taken from your self-assessment - exactly as SPRS itself works. Automated coverage grows per control.">90</b><span>/110</span></div>
       </div>
     </div>
 
@@ -368,6 +376,8 @@
     <h1>Walk into the assessment with <em>proof</em>, not hope.</h1>
     <p class="dek">Your CMMC controls, checked live against your own evidence &mdash; each one an <b>executable rule an assessor can read, re-run, and try to break</b>, that hands back the exact violating record when it fails. The ones that matter most read your event history, not just a config snapshot. Pick a control and watch it evaluate, with the record behind every verdict.</p>
 
+    <div class="fca-strip"><b>Your Affirming Official signs this number every year, under the False Claims Act.</b> This tool makes the number true &mdash; and shows the exact record when it isn&rsquo;t. <a class="fca-cite" href="https://www.justice.gov/opa/media/1424126/dl" target="_blank" rel="noopener" title="DOJ FY2025 False Claims Act statistics: Civil Cyber-Fraud Initiative recoveries exceeded $52M across nine settlements. Corroborated by the Holland &amp; Knight Jan-2026 enforcement alert.">DOJ FY2025: $52M across 9 cyber-FCA settlements &#8599;</a></div>
+
     <div class="sprs">
       <div class="sprs-num"><span id="sprs-score">90</span><small>/110</small></div>
       <div class="sprs-mid">
@@ -375,7 +385,7 @@
         <div class="sprs-track"><div class="sprs-bar" id="sprs-bar"></div><div class="sprs-mark" title="88 = POA&amp;M threshold"></div></div>
         <div class="sprs-status bad" id="sprs-status">&mdash;</div>
       </div>
-      <div class="sprs-note">Flip any remediation and the real score moves. A score of 88 or higher still can&rsquo;t be certified if an open gap is worth more than 1 point &mdash; only 1-point items can go on a POA&amp;M.</div>
+      <div class="sprs-note">Flip any remediation and the real score moves. A score of 88 or higher still can&rsquo;t be certified if an open gap is worth more than 1 point &mdash; only 1-point items can go on a POA&amp;M. Score = 110 minus the weights of failing checks among the six practices under automated check. The other 104 are taken from your self-assessment &mdash; exactly as SPRS itself works. Automated coverage grows per control.</div>
     </div>
 
     <div class="why">
@@ -434,6 +444,7 @@
             </ol>
           </details>
           <div class="kindnote" id="s-kindnote"></div>
+          <div class="metanote" id="s-metanote" hidden></div>
         </div>
       </div>
 
@@ -507,10 +518,10 @@
         <div class="ex-panel">
           <div class="ex-lab"><span class="ex-n">1</span> The requirement &mdash; <a id="ex-cite" class="ex-cite" href="#" target="_blank" rel="noopener"></a></div>
           <div class="ex-prose" id="ex-prose"></div>
-          <button class="ex-btn" id="ex-draft" type="button">Draft the check &rarr;</button>
+          <button class="ex-btn" id="ex-draft" type="button">Show the check &rarr;</button>
         </div>
         <div class="ex-panel ex-dim" id="ex-rulewrap">
-          <div class="ex-lab"><span class="ex-n">2</span> The checkable rule <span class="ex-hint">drafted from the sentence &middot; your expert confirms it</span></div>
+          <div class="ex-lab"><span class="ex-n">2</span> The checkable rule <span class="ex-hint">authored from this sentence and verified by an expert &mdash; machine drafting is roadmap, not what you&rsquo;re watching</span></div>
           <pre class="ex-prop" id="ex-prop"></pre>
           <button class="ex-btn" id="ex-run" type="button" hidden>Run it against the evidence &rarr;</button>
         </div>
@@ -525,7 +536,7 @@
     <section class="premium" id="premium" data-view="premium">
       <div class="pr-eyebrow">The premium layer &middot; formal verification</div>
       <h2 class="pr-h">We can prove the process, not just the snapshot.</h2>
-      <p class="pr-lead">Every check above reads your <b>evidence</b> &mdash; was that access revoked in time? The premium layer proves the <b>machine that produces the evidence</b>: does your revocation pipeline <b>always eventually</b> revoke, across every possible sequence of events? No point-in-time audit can answer that &mdash; only model-checking can.</p>
+      <p class="pr-lead">Every check above reads your <b>evidence</b> &mdash; was that access revoked in time? The premium layer proves a <b>model of your revocation pipeline</b>: does it <b>always eventually</b> revoke, across every possible sequence of events? No point-in-time audit can answer that &mdash; only model-checking can. What you see below is the class of guarantee you get once we model <i>your</i> pipeline &mdash; and the counterexample a best-effort retry produces.</p>
       <div class="pr-sbs">
         <div class="pr-sbs-col">
           <div class="pr-lab">The requirement, in English</div>
@@ -564,12 +575,12 @@ Spec == Init <span class="op">/\</span> [][Next]_vars <span class="op">/\</span>
 =&gt;  obligation VIOLATED</pre>
         </div>
       </div>
-      <p class="pr-foot">This is genuine formal verification (model-checking) &mdash; a harder guarantee than the checks above, and the reason a formal-methods specialist is in the room. The entry tier checks your evidence; this proves the process behind it. Re-runnable from the actual spec on request.</p>
+      <p class="pr-foot">This is genuine formal verification (model-checking) &mdash; a harder guarantee than the checks above, and the reason a formal-methods specialist is in the room. The entry tier checks your evidence; this proves a model of the process behind it. Re-runnable from the actual spec on request.</p>
     </section>
 
   <aside class="legend" id="legend" aria-label="Source documents">
     <div class="lhead"><span>Source documents</span><button class="lclose" id="lclose" type="button" aria-label="Hide" title="Hide">&times;</button></div>
-    <div class="lsub">Every check is drafted from these governance sources &mdash; click any to open the original.</div>
+    <div class="lsub">Every check was authored and verified against these governance sources &mdash; click any to open the original.</div>
     <a class="ldoc cur" id="doc-171" href="#" target="_blank" rel="noopener"><b>NIST SP 800-171 Rev 2 &#8599;</b><span id="doc-171-sub">this control&rsquo;s requirement</span></a>
     <a class="ldoc" href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171A.pdf" target="_blank" rel="noopener"><b>NIST SP 800-171A &#8599;</b><span>the 320 assessment objectives</span></a>
     <a class="ldoc" href="https://dodcio.defense.gov/Portals/0/Documents/CMMC/AssessmentGuideL2v2.pdf" target="_blank" rel="noopener"><b>CMMC L2 Assessment Guide &#8599;</b><span>how an assessor tests each control</span></a>
@@ -3224,6 +3235,11 @@ window.CONTROLS["separation-of-duties"] = {
     "separation-of-duties": "In plain terms: for every pair of duties your SSP marks as conflicting, no single person may hold both on the same system. One person holding both sides of a conflict is a finding.",
     "session-lock": "In plain terms: for every CUI asset, the screen must lock after your SSP's inactivity timeout and conceal what was on it. An asset that fails either is a finding."
   };
+  // Per-control disclosure footnotes -- honest edges of the demo's mappings.
+  var METANOTE = {
+    "audit-review-cadence": "Footnote: the mapping of this review-cadence check to AU.L2-3.3.1 is pending your team's sign-off.",
+    "mfa-on-cui": "Footnote: shown at the full 5-point weight. The DoD methodology's Annex A scores 3.5.3 at 3 points when MFA covers remote and privileged access but not yet general users -- this demo flattens that split to 5."
+  };
   var KW = {"for":1,"every":1,"FORALL":1,"EXISTS":1,"not":1,"NOT":1};
   var OP = {"=>":1,"->":1,"==>":1,"IMPLIES":1,"AND":1,"OR":1,"in":1,"!=":1,">=":1,"<=":1,"IF":1,"THEN":1};
 
@@ -3305,6 +3321,7 @@ window.CONTROLS["separation-of-duties"] = {
     var dts=document.getElementById("dt-ssp"); if(dts){ dts.textContent=dt.ssp; }
     var d1s=document.getElementById("doc-171-sub"); if(d1s){ d1s.textContent=(m.id||ctl.family)+" - this control's requirement"; }
     var kn=document.getElementById("s-kindnote"); kn.className="kindnote "+kind; kn.innerHTML=KINDNOTE[kind];
+    var mn=document.getElementById("s-metanote"); if(mn){ var mtext=METANOTE[state.id]||""; mn.textContent=mtext; mn.hidden=!mtext; }
     document.getElementById("s-prop").innerHTML=colorize(ctl.propertyText);
     var pp=document.getElementById("s-prop-plain"); if(pp){ pp.textContent=PROP_PLAIN[state.id]||""; }
 
@@ -3427,7 +3444,7 @@ window.CONTROLS["separation-of-duties"] = {
   render();
   updateScore();
 
-  // ---- Extract-and-run hero: a written requirement -> a drafted checkable rule -> it runs ----
+  // ---- Extract-and-run hero: a written requirement -> the authored, expert-verified checkable rule -> it runs ----
   var REQ_PROSE = {
     "deprovision-cui": {req:"Ensure that organizational systems containing CUI are protected during and after personnel actions such as terminations and transfers.", cite:"PS.L2-3.9.2"},
     "audit-review-cadence": {req:"Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, investigation, and reporting of unlawful or unauthorized system activity.", cite:"AU.L2-3.3.1"},
@@ -3452,16 +3469,15 @@ window.CONTROLS["separation-of-duties"] = {
       rw.classList.add("ex-dim"); rw.classList.remove("ex-live"); rsw.classList.add("ex-dim"); rsw.classList.remove("ex-live");
       var v=document.getElementById("ex-verdict"); v.textContent="-"; v.className="ex-verdict";
       document.getElementById("ex-detail").innerHTML="";
-      draftBtn.disabled=false; draftBtn.textContent="Draft the check ->";
+      draftBtn.disabled=false; draftBtn.textContent="Show the check ->";
     }
     draftBtn.addEventListener("click", function(){
       var c=C[state.id]; if(!c) return;
-      draftBtn.disabled=true; draftBtn.textContent="reading the requirement...";
-      setTimeout(function(){
-        rw.classList.remove("ex-dim"); rw.classList.add("ex-live");
-        propEl.innerHTML=colorize(c.propertyText||""); propEl.classList.add("show");
-        runBtn.hidden=false; draftBtn.textContent="drafted";
-      }, 650);
+      // No fake delay: the rule was authored and verified ahead of time -- reveal it immediately.
+      draftBtn.disabled=true;
+      rw.classList.remove("ex-dim"); rw.classList.add("ex-live");
+      propEl.innerHTML=colorize(c.propertyText||""); propEl.classList.add("show");
+      runBtn.hidden=false; draftBtn.textContent="shown";
     });
     runBtn.addEventListener("click", function(){
       var c=C[state.id]; if(!c) return;
@@ -3671,7 +3687,7 @@ window.CONTROLS["separation-of-duties"] = {
       target:function(){ return [ id("legend") ]; },
       cursorEl:function(){ return qs("#legend .ldoc"); },
       title:"Every check traces to a real document",
-      text:"Each rule is drafted from these government sources: 800-171, the CMMC Assessment Guide, 32 CFR. They are always one click away." },
+      text:"Each rule was authored and verified against these government sources: 800-171, the CMMC Assessment Guide, 32 CFR. They are always one click away." },
 
     { view:"premium", place:"auto",
       target:function(){ return [ qs(".pr-tla") ]; },

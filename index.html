@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Elevate your CMMC  -  continuous control validation</title>
 <style>
   :root{
@@ -341,11 +342,37 @@
   .stickybar .sb-org{color:var(--slate); margin-right:6px;}
   .views{display:block;}
   .workbench{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; margin-top:8px;}
+  /* min-width:0 kills the grid min-content blow-out: without it the trace's nowrap
+     lines force the column (and on phones the whole layout viewport) wider than the
+     screen; with it, wide content scrolls inside its own overflow-x:auto container */
+  .workbench > .pipe{min-width:0;}
+  .pr-grid > .pr-card{min-width:0;}
   .workbench .pipe{margin-top:16px;}
   @media(max-width:900px){.workbench{grid-template-columns:1fr;}}
   /* Sources tab: de-fix the legend and beat the 1500px display:none media rule (specificity 0,2,1 > 0,1,0) */
   section[data-view="sources"] .legend{position:static; display:block; top:auto; right:auto; width:auto; max-width:640px; max-height:none; margin:8px 0; box-shadow:none; z-index:auto;}
   section[data-view="sources"] #lclose{display:none;}
+
+  /* ---- mobile (<=480px): appbar wraps, 44px tap targets, legend returns as a
+     default-collapsed pill (bottom-left; expanding gives a modal-style sheet).
+     Placed last in this sheet so it wins the max-width:1500px display:none rule. ---- */
+  @media(max-width:480px){
+    .appnav{gap:2px; padding:6px 8px 0;}
+    .navtab{display:inline-flex; align-items:center; min-height:44px; padding:4px 11px;}
+    .stickybar{flex-wrap:wrap; row-gap:2px; padding:6px 12px 8px; font-size:11px;}
+    .stickybar .sb-right{margin-left:auto;}
+    .stickybar .sb-right b{font-size:14px;}
+    .runbtn{min-height:44px; padding:10px 16px; font-size:13px;}
+    .ex-btn{min-height:44px; padding:10px 15px;}
+    .chip{min-height:44px; justify-content:center;}
+    .rtoggle{min-height:44px; padding:12px 0;}
+    .switch input{width:160%; height:160%; left:-30%; top:-30%;}
+    .fca-cite{white-space:normal;}
+    .legend{display:block; left:12px; right:12px; top:12vh; bottom:auto; width:auto; max-height:52vh; z-index:70;}
+    .legend.collapsed{left:14px; right:auto; top:auto; bottom:16px; z-index:55;}
+    .legend.collapsed .lhead{padding:12px 16px;}
+    .legend .lclose{font-size:22px; padding:6px 10px;}
+  }
 </style>
 
 <div class="wrap">
@@ -3441,6 +3468,9 @@ window.CONTROLS["separation-of-duties"] = {
   var rb=document.getElementById("run-btn"); if(rb){ rb.addEventListener("click", function(){ state.ran=true; runTrace(); }); }
   var lc=document.getElementById("lclose"); if(lc){ lc.onclick=function(e){ if(e&&e.stopPropagation){e.stopPropagation();} var lg=document.getElementById("legend"); if(lg){lg.classList.add("collapsed");} }; }
   var lhd=document.querySelector("#legend .lhead"); if(lhd){ lhd.onclick=function(){ var lg=document.getElementById("legend"); if(lg&&lg.classList.contains("collapsed")){lg.classList.remove("collapsed");} }; }
+  /* on phones the legend is visible again (see the <=480px media block) -- start it
+     collapsed to the pill so it never blocks the demo; expanding stays one tap */
+  if(window.matchMedia && window.matchMedia("(max-width:480px)").matches){ var lg480=document.getElementById("legend"); if(lg480){ lg480.classList.add("collapsed"); } }
   render();
   updateScore();
 
@@ -3587,6 +3617,20 @@ window.CONTROLS["separation-of-duties"] = {
     .tour-pill{animation:none;}
   }
   @media(max-width:520px){ .tour-caption{max-width:calc(100vw - 24px);} }
+  /* ---- mobile (<=480px): caption becomes a bottom-anchored full-width bar (never
+     overflows, controls at the thumb), cursor scales down, all tour buttons >=44px ---- */
+  @media(max-width:480px){
+    .tour-cursor svg{width:18px; height:21px;}
+    .tour-caption{width:100%; max-width:100%; border-radius:14px 14px 0 0;
+      border-left:none; border-right:none; border-bottom:none;
+      padding:14px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom));
+      box-shadow:0 -10px 34px rgba(0,8,30,.5);}
+    .tour-caption button{min-height:44px; min-width:44px; padding:10px 15px; font-size:13px;}
+    .tour-caption .tc-skip{padding-left:6px; padding-right:6px;}
+    .tour-launch{min-height:44px;}
+    .tour-pill .tp-go{min-height:44px;}
+    .tour-pill .tp-x{min-height:44px; min-width:44px;}
+  }
 </style>
 <script>
 /* Guided "How this works" tour -- additive; drives the real UI (hash router, run
@@ -3598,6 +3642,7 @@ window.CONTROLS["separation-of-duties"] = {
 
   function vw(){ return window.innerWidth || document.documentElement.clientWidth; }
   function vh(){ return window.innerHeight || document.documentElement.clientHeight; }
+  function isNarrow(){ return vw() <= 480; }
   function id(x){ return document.getElementById(x); }
   function qs(s){ return document.querySelector(s); }
 
@@ -3698,6 +3743,7 @@ window.CONTROLS["separation-of-duties"] = {
 
   var active = false, idx = 0, gen = 0;
   var savedHash = null, savedFix = null, savedCollapsed = false, legendForced = false;
+  var settled = false, repositionT = null;
 
   function revealLegend(){
     var lg = id("legend"); if(!lg){ return; }
@@ -3732,6 +3778,12 @@ window.CONTROLS["separation-of-duties"] = {
     hole.style.height = (r.height + HPAD*2) + "px";
   }
   function positionCaption(r, place){
+    if(isNarrow()){
+      /* phones: bottom-anchored full-width bar -- never overflows, controls at the thumb */
+      caption.style.left = "0px";
+      caption.style.top = (vh() - caption.offsetHeight) + "px";
+      return;
+    }
     var cw = caption.offsetWidth, ch = caption.offsetHeight, L, T;
     place = place || "auto";
     function below(){ T = r.bottom + GAP; L = r.left; }
@@ -3760,8 +3812,16 @@ window.CONTROLS["separation-of-duties"] = {
   }
   function scrollRectCenter(r){
     if(r.height <= 0){ return; }
-    if(r.top >= 50 && r.bottom <= vh() - 50){ return; }
-    var y = window.pageYOffset + r.top + r.height/2 - vh()/2;
+    var ti = 50, bi = 50;
+    if(isNarrow()){
+      /* phones: the sticky appbar (top) and the caption bar (bottom) shrink the
+         usable band -- center the target inside what actually remains visible */
+      var ab = qs(".appbar");
+      ti = (ab ? ab.getBoundingClientRect().height : 0) + 12;
+      bi = (caption.offsetHeight || 150) + 16;
+    }
+    if(r.top >= ti && r.bottom <= vh() - bi){ return; }
+    var y = window.pageYOffset + r.top + r.height/2 - (ti + (vh() - ti - bi)/2);
     window.scrollTo(0, Math.max(0, y));
   }
   function raf2(fn){
@@ -3798,7 +3858,9 @@ window.CONTROLS["separation-of-duties"] = {
     if(!active){ return; }
     idx = Math.max(0, Math.min(steps.length - 1, i));
     var g = ++gen, s = steps[idx];
+    settled = false;
     setCaption(s);
+    if(isNarrow()){ positionCaption(); } /* re-pin the bottom bar to the new text height now */
     ensureView(s.view, function(){
       if(!active || g !== gen){ return; }
       if(s.prep){ s.prep(); }
@@ -3814,6 +3876,7 @@ window.CONTROLS["separation-of-duties"] = {
           positionCaption(r, s.place);
           var focus = (s.cursorEl && s.cursorEl()) || els[0];
           moveCursor(focus ? centerOf(focus) : { x:r.left + r.width/2, y:r.top + r.height/2 });
+          settled = true;
           if(s.clickTarget){
             setTimeout(function(){
               if(!active || g !== gen){ return; }
@@ -3854,13 +3917,19 @@ window.CONTROLS["separation-of-duties"] = {
     cursor.style.transform = "translate(" + (vw()/2) + "px," + (vh()*0.42) + "px)";
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
+    /* live re-measure: layout keeps moving under the tour (streaming trace lines,
+       post-tab-switch reflow, touch scrolling) -- getBoundingClientRect goes stale,
+       so refresh hole + caption + cursor from the live DOM while a step is settled.
+       Same-value writes are no-ops, so this never causes churn on a static layout. */
+    repositionT = setInterval(function(){ if(active && settled){ reposition(); } }, 400);
     idx = 0;
     go(0);
   }
 
   function exit(){
     if(!active){ return; }
-    active = false; gen++;
+    active = false; gen++; settled = false;
+    if(repositionT){ clearInterval(repositionT); repositionT = null; }
     document.removeEventListener("keydown", onKey);
     window.removeEventListener("resize", onResize);
     restoreLegend();

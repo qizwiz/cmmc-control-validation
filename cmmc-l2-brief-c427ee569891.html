@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CMMC Level 2 — background &amp; honest FAQ</title>
+<style>
+  :root{
+    --navy:#0a1430; --ink:#e9eef8; --mut:#8fa2c7; --sky:#6EC1E4; --red:#ff7a7a; --green:#5fd0a0;
+    --amber:#f2c14e; --line:#1e2c52; --card:#101d42;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:linear-gradient(160deg,#08102a,#0a1430 60%,#0b1738);color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  #app{height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;justify-content:space-between;padding:13px 26px;border-bottom:1px solid var(--line);flex:none}
+  .brand{font-weight:700}.brand .sky{color:var(--sky)}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+  main{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:30px}
+  .slide{max-width:940px;width:100%;animation:f .16s ease}
+  @keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  .label{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--sky);margin-bottom:12px;font-weight:700}
+  h1{font-size:38px;line-height:1.12;margin:.1em 0 .3em;font-weight:750;text-wrap:balance}
+  h2{font-size:25px;line-height:1.2;margin:.1em 0 .5em;font-weight:700;text-wrap:balance}
+  .sub{color:var(--mut);font-size:16px;margin-bottom:8px}
+  .say{border-left:3px solid var(--sky);padding:10px 0 10px 18px;margin:16px 0;font-size:21px;line-height:1.5;color:#f4f8ff}
+  .do{color:var(--sky);font-size:13px;letter-spacing:.03em;font-weight:600;margin-bottom:6px}
+  .do .t{color:var(--mut);font-weight:400}
+  ul{margin:.4em 0;padding-left:20px}li{margin:.4em 0}
+  .q{font-size:22px;font-weight:700;color:var(--sky);margin-bottom:12px;text-wrap:balance;border-left:3px solid var(--sky);padding-left:16px}
+  .a{font-size:18px;line-height:1.55;border-left:3px solid var(--green);padding-left:16px;color:#eafaf2}
+  .never li{color:#ffd9d9}.never li b{color:var(--red)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:12px 0}
+  .ask{font-size:19px;line-height:1.55;color:#f4f8ff}
+  .carry{color:var(--sky);font-style:italic;font-size:18px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+  .mut{color:var(--mut)} b.sky{color:var(--sky)} b.red{color:var(--red)} b.amber{color:var(--amber)}
+  .gl{margin:.5em 0}.gl b{color:var(--sky)}.gl .say2{color:#eafaf2;font-style:italic}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+  th{color:var(--sky);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  td.no{color:var(--red);font-weight:700}td.yes{color:var(--green);font-weight:700}
+  footer{display:flex;align-items:center;justify-content:space-between;padding:11px 26px;border-top:1px solid var(--line);flex:none;font-size:12px;color:var(--mut)}
+  footer .nav{display:flex;gap:8px}
+  button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 13px;font:inherit;font-size:13px;cursor:pointer}
+  button:hover{border-color:var(--sky)}
+  .count{font-variant-numeric:tabular-nums}
+  .bar{height:3px;background:var(--line);flex:none}.bar>i{display:block;height:100%;background:var(--sky);transition:width .2s}
+  #idx{position:fixed;inset:0;background:rgba(6,11,28,.95);display:none;padding:34px;overflow:auto}#idx.on{display:block}
+  #idx h3{color:var(--sky);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:18px 0 6px}
+  #idx ol{list-style:none;padding:0;margin:0;max-width:860px}
+  #idx li{padding:6px 12px;border-radius:7px;cursor:pointer;display:flex;gap:12px}#idx li:hover{background:var(--card)}
+  #idx li .n{color:var(--mut);font-variant-numeric:tabular-nums;min-width:26px}
+  kbd{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+  @media (max-width:640px){h1{font-size:28px}.say{font-size:18px}.q{font-size:19px}main{padding:18px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar"><i id="prog"></i></div>
+  <header><div class="brand">CMMC Level 2 · <span class="sky">background &amp; FAQ</span></div><div class="kicker" id="section">—</div></header>
+  <main id="main"></main>
+  <footer>
+    <div>Prototype background — every finding traces to a clickable primary source.</div>
+    <div class="nav"><button onclick="go(-1)">← prev</button><span class="count" id="count">1 / 1</span><button onclick="go(1)">next →</button><button onclick="toggleIdx()">☰ index</button></div>
+  </footer>
+</div>
+<div id="idx" onclick="if(event.target.id==='idx')toggleIdx()"></div>
+<script>
+const S = [
+  {sec:"CMMC LEVEL 2", label:"Background · the demo · honest FAQ", h1:"CMMC Level 2, the demo, and the honest questions about it.",
+   html:`<p class="sub">Background I put together while building the control-validation prototype — what CMMC Level 2 is from zero, what the demo does, and straight answers to the hard questions it raises.</p>
+   <p class="sub" style="margin-top:14px">The prototype is one loop: <b class="sky">a verdict → the exact violating record → fix it → the signed SPRS score moves.</b> The live demo runs from GitHub.</p>
+   <p class="mut" style="margin-top:14px">New to CMMC? This starts from zero. <kbd>→</kbd>/<kbd>←</kbd> walk · <kbd>i</kbd> index · <kbd>Esc</kbd> close</p>`},
+
+  // ---- START HERE: CMMC from absolute zero (plain English, no acronym assumed) ----
+  {sec:"START HERE · 1/8", label:"What is CMMC?", h1:"The military's rule: prove your cybersecurity.",
+   html:`<p class="sub"><b>CMMC</b> stands for <i>Cybersecurity Maturity Model Certification</i> — but forget the words. In plain English: <b class="sky">it's the U.S. military's rule that makes its private contractors PROVE their cybersecurity is real, instead of just promising it on paper.</b> That's the whole idea. Everything else is detail.</p>
+   <p class="mut" style="margin-top:14px">Why it exists: hackers — especially China — kept stealing sensitive military information from small contractors who <i>said</i> they were secure and weren't. So the Department of Defense said: prove it, or you don't get the contract.</p>`},
+  {sec:"START HERE · 2/8", label:"Who has to care", h2:"~80,000 companies that sell to the military",
+   html:`<p class="sub">They're called the <b>defense industrial base</b> (you'll see "DIB"). If one of them handles sensitive government information — not secret/classified, but still can't leak — it has to prove it protects it.</p>
+   <p class="sub" style="margin-top:12px">That sensitive info has a name: <b class="sky">CUI — Controlled Unclassified Information.</b> Handling CUI is the trigger for this whole thing. No CUI, none of it applies.</p>`},
+  {sec:"START HERE · 3/8", label:"What they must prove", h2:"A checklist of 110 security requirements",
+   html:`<p class="sub">The checklist comes from a government standard called <b>NIST 800-171</b> — 110 specific requirements (use two-step login, lock idle screens, cut off access when someone's fired, and so on).</p>
+   <p class="sub" style="margin-top:12px">Handle CUI → you're at <b class="sky">"Level 2"</b> → you must meet those 110. <span class="mut">(Level 1 is a lighter tier for less-sensitive info; Level 3 is the most sensitive. The demo is entirely Level 2.)</span></p>`},
+  {sec:"START HERE · 4/8", label:"The score + who checks it", h2:"You get a number — and soon, an outside auditor",
+   html:`<p class="sub">Companies self-report a score in a DoD system called <b>SPRS</b>. You start at 110 and lose 1, 3, or 5 points for each requirement you don't meet.</p>
+   <p class="sub" style="margin-top:12px">Starting <b class="sky">around this November</b>, self-reporting stops being enough — an outside auditing firm has to certify you. That firm is a <b>C3PAO</b>. There are only about <b class="sky">103 of them for ~80,000 companies</b> — a massive bottleneck. That scarcity is the market this sits in.</p>`},
+  {sec:"START HERE · 5/8", label:"The players — readiness vs. auditing", h2:"Two roles, and the wall between them",
+   html:`<ul>
+   <li><b class="sky">Readiness</b> — helping a company GET READY. This is a consulting role. (Gigit does this.)</li>
+   <li><b>The auditor</b> — the firm that does the official certification is the <b>C3PAO</b>. Here that's <b>Peak InfoSec</b> (Matthew Titcombe). Readiness and certification are kept separate on purpose.</li>
+   <li><b class="sky">CCP</b> — a Certified CMMC Professional is the person qualified to check a set of control mappings. (Michael Anglen holds that credential at Gigit.)</li>
+   </ul>
+   <p class="mut" style="margin-top:8px">The rule: one firm can't both PREP and AUDIT the same client — the "conflict-of-interest wall." This tool lives on the readiness (prep) side, always.</p>`},
+  {sec:"START HERE · 6/8", label:"The pain the demo targets", h1:"Score above 88 — and still fail.",
+   html:`<p class="sub">Companies assume a good score means they're safe. Here's the trap: <b class="sky">a single big gap (worth 5 points) can't go on a "we'll fix it later" plan</b> (that plan is a <b>POA&M</b>). A big gap is an automatic fail — no matter how good your total is.</p>
+   <p class="sub" style="margin-top:12px">So a company can score 105 out of 110 and STILL not get certified, because one 5-point gap is a hard blocker. <b>Nobody sees it coming.</b> The demo surfaces the exact broken record that causes it — weeks before an auditor would.</p>`},
+  {sec:"START HERE · 7/8", label:"The demo in one breath", h2:"Verdict → the broken record → fix it → the number moves",
+   html:`<p class="sub">It runs 6 of those 110 checks against a fake 200-person company ("Northwind"). For each check it shows the verdict, then the <b class="sky">exact record breaking the rule</b> — a real person who still has system access after being fired — you fix that one record, and the score at the top visibly moves.</p>
+   <p class="sub" style="margin-top:12px">That's the entire product. Everything after this slide is background: the honest FAQ, and a glossary if a term is unfamiliar.</p>`},
+  {sec:"START HERE · 8/8", label:"The honest position", h1:"I'm not the CMMC expert — and that's the point.",
+   html:`<p class="sub">I'm weeks into this domain. So I built the tool so my mistakes get <b class="sky">caught</b>: every claim traces to a primary source anyone can click, the whole page is view-source-able, and the six mappings are marked <b>"pending a CCP's sign-off."</b></p>
+   <p class="sub" style="margin-top:12px">The engine and the honesty are mine; the CMMC depth belongs to the people who've lived it. A CCP tearing apart these six mappings — telling me which an assessor would actually sign — is exactly the review this needs next.</p>`},
+
+  // ---- HONEST FAQ (the hard questions, straight answers) ----
+  {sec:"FAQ · intro", label:"The hard questions, answered straight", h2:"If it's a fair poke, it's in here.",
+   html:`<p class="sub">These are the sharpest questions I could throw at my own prototype, with honest answers. Where the tool is limited, the answer says so. The pattern throughout: concede what's true, and be precise about the one or two things that are genuinely different.</p>`},
+  {sec:"FAQ · 1", q:`"Is this formal verification?"`,
+   a:`"No, and I won't dress it up as one. The six checks are deterministic rules over your evidence — 'automated validation with clear failure criteria,' which is FedRAMP 20x's own phrase, not mine. The only actually-formal piece is the premium tab. Two tiers, two vocabularies, kept apart on purpose — the fastest way to lose trust is to call an if-statement a proof."`},
+  {sec:"FAQ · 2", q:`"The score says [N] and you checked six practices — where are the other 104?"`,
+   a:`"Right there in the caption — the other 104 are self-assessed, exactly how SPRS already works today. I'm only claiming these six are checked in a way the rest aren't. If you push me on how far machine-checking can reach, my honest guess is 20–30% of the objectives have any machine signal at all — but that's a guess, and it owes a CCP the objective-by-objective walk before I'd say it to a client. The judgment work stays human."`},
+  {sec:"FAQ · 3", q:`"You're an authorized C3PAO — does this conflict with the assessment business?"`,
+   a:`"Let me say the wall before anything else, because it's the rule, not my preference — consult or assess, never both for the same client, 32 CFR 170.9. This is readiness-side, and it never touches a client Peak is going to certify. The ones you don't certify are clean revenue, and it just makes the assessors faster. Ignyte already does exactly this."`},
+  {sec:"FAQ · 4", q:`"How is this different from Vanta?"`,
+   a:`"Fair question, and I'm not going to tell you Vanta just shows a green check — that's not true and you'd know it. Three real differences. One, this is shaped the way an assessor reads it — SPRS weights, what can go on a POA&M, the source chain on every finding. Two, when the data's bad it says INDETERMINATE instead of a fake green. And three, the premium layer proves an absence, which no GRC tool does at all."`},
+  {sec:"FAQ · 5", q:`"You're brand new to CMMC — why trust the domain work?"`,
+   a:`"Weeks, yeah — I'm not going to pretend otherwise. But I built it so my mistakes get caught. Every claim traces to a source you can click, you can view-source the whole thing, and the mappings say 'pending sign-off' right on them. I got it SPRS-correct in days against the actual documents — that speed is the engineering. The CMMC depth here is meant to be a CCP's. The engine and the honesty are mine."`},
+  {sec:"FAQ · 6", q:`"Isn't this just OPA / Rego / if-statements over JSON?"`,
+   a:`"Yeah — that's exactly what the entry checks are, and it's what I call them: deterministic rules over your evidence. The engine isn't the value; everybody has one. Three things it does that a raw rule engine doesn't: it's shaped the way an assessor reads, with the source chain on every finding; it fails closed, so bad data is INDETERMINATE, not a false green; and the premium layer actually explores every path to check the account can't stay alive forever. The entry checks are table stakes — I'm not going to pretend the if-statements are the moat."`},
+  {sec:"FAQ · 7", q:`"You're not a C3PAO — you can't assess anything."`,
+   a:`"Right, I'm not, and it never claims to be — the footer literally says prototype, not an assessment. It's readiness evidence. The C3PAO here is Peak; the signature that matters is a CCP's, and the mappings say they're waiting on it. I don't need to be a C3PAO to build the evidence a readiness client hands one."`},
+  {sec:"FAQ · 8", q:`"Does the TLA+ tab prove my deprovisioning pipeline is correct?"`,
+   a:`"No — and the page says exactly that: it proves a model of the process, not your pipeline. It's a small thing, a handful of states. What it gives you is the kind of guarantee a snapshot can't: it'll hand you the crash-loop where the account stays alive forever while every screenshot looks green. A guarantee about a model of your process — and I'll re-run it in front of you any time."`},
+  {sec:"FAQ · 9", q:`"That 'draft the check' animation is a setTimeout revealing pre-written text — is it live?"`,
+   a:`"You're right that it's an illustration, not live drafting, and the panel says so. The checks were drafted by an LLM from the NIST requirement and then verified against the sources — every one a click away. What's not in the product yet is doing that drafting live; that's the roadmap. Nothing on the page claims to generate a check in real time."`},
+  {sec:"FAQ · 10", q:`"Your AU.L2-3.3.1 mapping is arguable, and 3.5.3 you flattened to weight 5."`,
+   a:`"Both of those are footnoted right on the page as pending sign-off — the 3.3.1 cadence line and the 3.5.3 weight. And honestly, those are exactly the calls a CCP should make, not me. I'd a hundred times rather have them caught here than by a client's CISO live."`},
+  {sec:"FAQ · 11", q:`"The verdict model is PASS/FAIL only — no N/A or POA&M state?"`,
+   a:`"True today — it's PASS/FAIL, there's no N/A or compensating-control state yet, so a documented compensating control would show red on a live screen. That's a real limitation, it's on the roadmap, and it's exactly why nothing goes cold into a room without review."`},
+  {sec:"FAQ · 12", q:`"Where does the CUI go? I'm not putting client data through your AI."`,
+   a:`"Fair concern. The six checks are plain code — no AI in the loop — and right now they run entirely in the browser on made-up data; nothing leaves the page. On a real pilot they'd run where your data already lives, so your CUI never leaves your boundary. The AI-drafting part is roadmap, and when it exists it runs in AWS GovCloud — an authorization boundary DoD already accepts. Writing a check never touches your data; only running one does, in your own tenant."`},
+  {sec:"FAQ · 13", q:`"Can you scale this to all 320 objectives — is it config-driven?"`,
+   a:`"Not config-only, and I won't pretend it is. It's templates per archetype — six built so far — each one matched to a verified control. Scaling is real engineering per type, not flipping a YAML switch. I'd rather tell you the true cost than sell you config-magic that doesn't exist."`},
+  {sec:"FAQ · 14", q:`"The roster says 'proven compliant' but the PASS caption says 'no violating record in the evidence provided' — which is it?"`,
+   a:`"The strict one — no violating record in the evidence provided. Where the roster says 'proven compliant,' that's loose wording and I'm tightening it. PASS never means you're actually compliant — just that nothing in the evidence you gave it broke the rule. A green box you can't back with a record is worse than no tool at all."`},
+
+  // ---- GLOSSARY ----
+  {sec:"GLOSSARY · who's who", label:"The ecosystem alphabet",
+   html:`<div class="gl"><b>CMMC</b> — DoD's program making contractors <i>prove</i> cybersecurity (32 CFR 170). L1 protects FCI (15 reqs, self-assessed); <b class="sky">L2 protects CUI (110 reqs = NIST 800-171 Rev 2), C3PAO-certified</b>; L3 adds 800-172, government-assessed. <span class="mut">The demo is entirely Level 2.</span></div>
+   <div class="gl"><b>C3PAO</b> — the accredited firm licensed to do L2 certification (~103 nationwide vs ~80,000 companies). <b class="sky">Peak InfoSec is the C3PAO here (the certifier); readiness is a separate role.</b></div>
+   <div class="gl"><b>CCP</b> — Certified CMMC Professional, the credential of the person qualified to say whether an assessor would sign a set of mappings. <b>CCA</b> — the assessor tier above CCP.</div>
+   <div class="gl"><b>DIBCAC</b> — the government body that authorizes the C3PAOs. <b>CyberAB</b> — DoD's accreditation body (source for the phase schedule; doesn't certify contractors). <b>DIB</b> — the ~200k-company defense supply chain; "Northwind" is a fictional DIB contractor.</div>`},
+  {sec:"GLOSSARY · standards", label:"The standards stack",
+   html:`<div class="gl"><b>NIST SP 800-171</b> — the 110 requirements that ARE CMMC L2. <b class="sky">Rev 2 is what CMMC assesses against today</b> (320 objectives); Rev 3 exists but CMMC is pinned to Rev 2 by <b>32 CFR 170.17</b>.</div>
+   <div class="gl"><b>NIST SP 800-171A</b> — the assessment companion. Breaks each of the 110 into <b class="sky">assessment objectives — the [a],[b],[c] determination statements</b> an assessor marks MET/NOT MET. 110 reqs → 320 objectives.</div>
+   <div class="gl"><b>SSP</b> — System Security Plan, the master doc of how a company meets each requirement; the first thing an assessor reads. <span class="say2">The checks run against the evidence the SSP points to — the record, not the promise.</span></div>`},
+  {sec:"GLOSSARY · scoring", label:"The money mechanics",
+   html:`<div class="gl"><b>SPRS</b> — where the 800-171 score lives (gates awards). <b class="sky">Start at 110, subtract 1/3/5 per unmet requirement</b>, can go negative. <span class="say2">Fix that one record and the signed SPRS score moves — the number on the contract.</span></div>
+   <div class="gl"><b>The "88" blindside</b> — 88 = 80% of 110, the floor to even be <i>eligible</i> for Conditional certification — but only if every gap is POA&M-eligible. <b class="red">A 3- or 5-point failure can't go on a POA&M — so a company can score 105 and still not certify.</b></div>
+   <div class="gl"><b>POA&M</b> — a dated fix plan. Allowed only if score ≥ 88 <b>and only for 1-point requirements</b> (180-day close). <b>Anything &gt;1 point is never POA&M-eligible</b> (32 CFR 170.21).</div>
+   <div class="gl"><b>CUI</b> (triggers L2) vs <b>FCI</b> (triggers L1). <b>FCA</b> — the Affirming Official signs the SPRS score annually under the False Claims Act.</div>`},
+  {sec:"GLOSSARY · regulation", label:"32 CFR 170 + the timeline",
+   html:`<div class="gl"><b>32 CFR Part 170</b> — the CMMC Program rule (eff. Dec 16 2024). Three subsections that matter here:</div>
+   <ul>
+   <li><b class="sky">170.9</b> — the conflict-of-interest wall: a C3PAO can't both consult on AND certify the same client. This tool is on the readiness (consult) side.</li>
+   <li><b class="sky">170.17</b> — pins L2 to 800-171 Rev 2.</li>
+   <li><b class="sky">170.21</b> — the ≥80%-and-1-point-only POA&M rules + 180-day closeout.</li>
+   </ul>
+   <div class="gl"><b>Phase 2 (~Nov 10, 2026)</b> — C3PAO L2 certification becomes a condition of award. ~1,391 certs vs ~80,000 needed, ~103 C3PAOs → assessor throughput is the bottleneck.</div>`},
+  {sec:"GLOSSARY · vocabulary", label:"Why it's 'validation,' not 'formal methods'",
+   html:`<div class="gl"><b>FedRAMP 20x / RFC-0024</b> — FedRAMP's move to machine-readable, continuously-validated evidence. <b class="sky">It's the government's own program that legitimizes calling deterministic evidence checks "validation with clear pass/fail criteria"</b> — which is why the six checks are described that way rather than as "formal methods."</div>
+   <div class="gl"><b>KSI</b> — FedRAMP 20x's unit of automatable validation (the cousin of the six checks). <b>OSCAL</b> — NIST's machine-readable format for controls/SSPs/results (the integration/scale path).</div>
+   <div class="gl"><b>ConMon / cATO</b> — continuous monitoring / continuous Authorization to Operate: the direction of travel from annual paperwork to live evidence. <span class="mut">A direction of travel — the demo is a per-load synthetic snapshot today.</span></div>`},
+  {sec:"GLOSSARY · the six", label:"The six controls — exact facts",
+   html:`<table><thead><tr><th>#</th><th>Control</th><th>Practice ID</th><th>Pts</th><th>POA&M?</th></tr></thead><tbody>
+   <tr><td>1</td><td>MFA on CUI systems</td><td>IA.L2-3.5.3</td><td>5</td><td class="no">No</td></tr>
+   <tr><td>2</td><td>Least privilege (admin)</td><td>AC.L2-3.1.5</td><td>3</td><td class="no">No</td></tr>
+   <tr><td>3</td><td>Separation of duties</td><td>AC.L2-3.1.4</td><td>1</td><td class="yes">Yes</td></tr>
+   <tr><td>4</td><td>Session lock (inactivity)</td><td>AC.L2-3.1.10</td><td>1</td><td class="yes">Yes</td></tr>
+   <tr><td>5</td><td>Audit log review cadence</td><td>AU.L2-3.3.1 (/3.3.5)</td><td>5</td><td class="no">No</td></tr>
+   <tr><td>6</td><td>Deprovision on personnel action</td><td><b class="sky">PS.L2-3.9.2</b></td><td>5</td><td class="no">No</td></tr>
+   </tbody></table>
+   <p class="mut">#5 (cadence → 3.3.1/3.3.5) and #1 (3.5.3 mapped to weight 5) are the two mappings footnoted pending a CCP's sign-off. #6 is the TLA+ premium control, PS.L2-3.9.2.</p>`},
+
+  // ---- WHAT IT IS / ISN'T ----
+  {sec:"WHAT IT IS — AND ISN'T", label:"The claims this tool deliberately does NOT make", h2:"The honesty is the point.",
+   html:`<ul>
+   <li>The six checks are <b>automated validation with clear pass/fail criteria</b> — not formal methods, and I don't call them that. Formal verification lives on one premium tab, and even there it proves a <b>model</b> of the deprovisioning process, never your actual pipeline.</li>
+   <li>It does <b>not</b> claim coverage or compliance. Six of ~110; PASS means "no violating record in the evidence provided," never "compliant." Any machine-evaluable percentage is an estimate pending a CCP's objective-by-objective review.</li>
+   <li>It runs on <b>one synthetic seeded company</b>, not real data. The checks are LLM-drafted from the primary-source requirement and verified against it; doing that drafting live in the product is roadmap, not today.</li>
+   </ul>`},
+  {sec:"THE SHORT VERSION", label:"If you read nothing else", h2:"Six checks — and honest about being six.",
+   html:`<div class="card"><div class="ask">One loop: a verdict, then the exact record that proves or breaks it, then the fix moving the signed SPRS number. Six of 110 controls. Every finding traces to a clickable primary source. The mappings are marked pending a CCP's sign-off — which is the natural next step.</div></div>
+   <p class="mut" style="margin-top:14px">The rest of this deck is the background behind those two sentences: what CMMC Level 2 is, the honest FAQ, and a glossary.</p>`},
+];
+
+let i = 0;
+const main = document.getElementById('main');
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function render(){
+  const s = S[i]; let body='';
+  if(s.html) body=s.html;
+  else if(s.q) body=`<div class="q">${esc(s.q)}</div><div class="a">${esc(s.a)}</div>`;
+  else if(s.say) body=(s.do?`<div class="do">DO · <span class="t">${esc(s.do)}</span></div>`:'')+`<div class="say">${esc(s.say)}</div>`;
+  const head=s.h1?`<h1>${esc(s.h1)}</h1>`:(s.h2?`<h2>${esc(s.h2)}</h2>`:'');
+  main.innerHTML=`<div class="slide"><div class="label">${esc(s.label||'')}</div>${head}${body}</div>`;
+  document.getElementById('section').textContent=s.sec||'';
+  document.getElementById('count').textContent=(i+1)+' / '+S.length;
+  document.getElementById('prog').style.width=((i+1)/S.length*100)+'%';
+  main.scrollTop=0;
+}
+function go(d){ i=Math.max(0,Math.min(S.length-1,i+d)); render(); }
+function jump(n){ i=n; render(); document.getElementById('idx').classList.remove('on'); }
+function toggleIdx(){
+  const x=document.getElementById('idx');
+  if(!x.classList.contains('on')){
+    let last='';
+    x.innerHTML='<h3>Jump to</h3><ol>'+S.map((s,n)=>{
+      const sec=s.sec.split('·')[0].trim();
+      const h = sec!==last?`<h3 style="margin:14px 0 4px">${esc(sec)}</h3>`:''; last=sec;
+      const t=s.h1||s.h2||s.q||s.label||'';
+      return h+`<li onclick="jump(${n})"><span class="n">${n+1}</span><span>${esc(t).slice(0,84)}</span></li>`;
+    }).join('')+'</ol>';
+  }
+  x.classList.toggle('on');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){go(1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){go(-1);e.preventDefault();}
+  else if(e.key==='Home'){i=0;render();}
+  else if(e.key==='End'){i=S.length-1;render();}
+  else if(e.key==='i'){toggleIdx();}
+  else if(e.key==='Escape'){document.getElementById('idx').classList.remove('on');}
+});
+render();
+</script>
+</body>
+</html>
